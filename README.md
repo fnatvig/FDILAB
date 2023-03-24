@@ -1,2 +1,2 @@
 # FDIASIM
-A simulator for false data injection attacks
+A False Data Injection Attacks Simulator
