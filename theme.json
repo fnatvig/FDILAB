@@ -1,0 +1,57 @@
+{
+    "button":
+     {
+         "colours":
+         {
+             "normal_bg": "#45494e",
+             "selected_bg": "#55595e",
+             "normal_text": "#AAAAAA",
+             "selected_text": "#FFFFFF",
+             "border": "#FFFFFF"
+         },
+         "misc":
+         {
+             "border_width": "0",
+             "shadow_width": "2",
+             "padding": "5,5"
+         }
+     },
+
+     "drop_down_menu":
+    {
+        "misc":
+        {
+            "border_width": "0",
+            "expand_direction": "down"
+        },
+
+        "colours":
+        {
+            "normal_bg": "#25292e",
+            "hovered_bg": "#35393e"
+        }
+    },
+    "drop_down_menu.#selected_option":
+    {
+        "misc":
+        {
+           "border_width": "0"
+        }
+    },
+    "label":
+     {
+         "colours":
+         {
+             "dark_bg": "#000000",
+             "normal_text": "#AAAAAA",
+             "text_shadow": "#505050"
+         },
+         "misc":
+         {
+            "border_width": "0",
+            "shadow_width": "2",
+            "padding": "5,5"
+         }
+     }
+    
+}
