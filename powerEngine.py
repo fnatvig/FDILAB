@@ -234,7 +234,7 @@ def animate(i, net, ax, lc, bc, tc, load_list, bv, q, q1):
     if len(net.bus.index)<14:
         del draw_list[2]
     plot.draw_collections(draw_list, ax=ax)
-    pp.runpp(net, run_control=True, max_iteration=50)
+    pp.runpp(net, run_control=True, max_iteration=100)
     get_measurements(net, q)
     est.estimate(net)
 
@@ -305,7 +305,7 @@ def load_case14(q, q1):
     tc = plot.create_trafo_collection(net, color="silver",size=0.05, zorder=1)
     
     n_ts =  500
-    volatility=0.005
+    volatility=0.001
     lsf_values, lsf = create_load_profile(net, n_ts, volatility)
 
 
@@ -330,7 +330,7 @@ def load_case9(q, q1):
     tc = plot.create_trafo_collection(net, color="silver",size=0.05, zorder=1)
     
     n_ts =  500
-    volatility=0.005
+    volatility=0.001
     lsf_values, lsf = create_load_profile(net, n_ts, volatility)
     ani = animation.FuncAnimation(fig, animate, fargs=(net, ax, lc, bc, tc, lsf, base_values, q, q1), interval=500, frames=100) 
 
