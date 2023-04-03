@@ -25,6 +25,6 @@ This section aims to describe the application's overall architecture. After read
 
 The figure below may clarify how the different modules are connected. The blue boxes represent the involved python modules, while the black arrows show how the modules depend on each other. For instance, powerEngine.py depends on FDIA.py, which explains why the arrow points from powerEngine.py to FDIA.py. Furthermore, the white boxes with curved black arrows show the most important processes defined in each module.
 
-![Uploading architecture.png…]()
+![architecture](https://user-images.githubusercontent.com/103872952/229471269-262f7df9-317b-476e-9d68-e4e3ca92ffad.png)
 
 ---TBD--- 
