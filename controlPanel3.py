@@ -2,7 +2,7 @@ import os
 import pygame
 import pygame_gui
 import socket
-import controlPanel_lv1
+import controlPanel2
 import struct
 
 #Control panel size
@@ -85,7 +85,7 @@ def main(prev_msg):
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 if event.ui_element == back_button:
                     is_running = False
-                    controlPanel_lv1.main(prev_msg)
+                    controlPanel2.main(prev_msg)
 
                 if event.ui_element == run_button:
                     bus = int(bus_menu.selected_option)

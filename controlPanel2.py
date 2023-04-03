@@ -2,8 +2,8 @@ import os
 import pygame
 import pygame_gui
 import socket
-import controlPanel_lv2
-import controlPanel
+import controlPanel3
+import controlPanel1
 import struct
 
 #Control panel size
@@ -74,10 +74,10 @@ def main(prev_msg):
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
                 if event.ui_element == back_button:
                     is_running = False
-                    controlPanel.main(prev_msg)
+                    controlPanel1.main(prev_msg)
                 if event.ui_element == single_button:
                     is_running = False
-                    controlPanel_lv2.main(prev_msg)
+                    controlPanel3.main(prev_msg)
                 if event.ui_element == plot_button:
                     packed_msg = struct.pack("i 12x", msg[4])
                     sock.sendto(packed_msg, (UDP_IP, UDP_PORT))

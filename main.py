@@ -1,7 +1,7 @@
 import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 from multiprocessing import Process
-import controlPanel
+import controlPanel1
 import powerEngine
 import plotServer
 import time
@@ -13,7 +13,7 @@ if __name__ == "__main__":
     p1 = Process(target=powerEngine.main)
     p1.start()
     # This process is responsible for the gui (mostlly based on a module named "pygame")
-    p2 = Process(target=controlPanel.main)
+    p2 = Process(target=controlPanel1.main)
     p2.start()
     # This process is responsible for single bus plotting
     p3 = Process(target=plotServer.main)

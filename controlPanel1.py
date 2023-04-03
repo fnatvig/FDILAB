@@ -1,7 +1,7 @@
 import pygame
 import pygame_gui
 import socket
-import controlPanel_lv1
+import controlPanel2
 import os
 import struct
 
@@ -64,11 +64,11 @@ def main():
                     packed_msg = struct.pack("i 12x", msg[1])
                     sock.sendto(packed_msg, (UDP_IP, UDP_PORT))
                     is_running = False
-                    controlPanel_lv1.main(msg[1])
+                    controlPanel2.main(msg[1])
                 elif event.ui_element == case9_button:
                     packed_msg = struct.pack("i 12x", msg[2])
                     sock.sendto(packed_msg, (UDP_IP, UDP_PORT))
-                    controlPanel_lv1.main(msg[2])
+                    controlPanel2.main(msg[2])
 
             manager.process_events(event)
 
