@@ -19,3 +19,12 @@ The application is only tested with python version Python 3.10.10, although I be
 
 # How to interpret the results
 As for now, the map only shows how the actual and estimated voltage magnitudes vary with time. As written in the previous section, the values shown in blue (acquired with the pandapower powerflow calculator) should be interpreted as the ground truth. The black values are the resulting values of the state estimation. The black values turn red if the estimates fall outside of their specified ranges which are given in the test cases. 
+
+# System Architecture
+This section aims to describe the application's overall architecture. After reading this section, you will get a general sense of the most relevant components of the application and the different frameworks used. However, to understand the application more in-depth, please turn to the comments in the code. 
+
+The figure below may clarify how the different modules are connected. The blue boxes represent the involved python modules, while the black arrows show how the modules depend on each other. For instance, powerEngine.py depends on FDIA.py, which explains why the arrow points from powerEngine.py to FDIA.py. Furthermore, the white boxes with curved black arrows show the most important processes defined in each module.
+
+![Uploading architecture.png…]()
+
+---TBD--- 
