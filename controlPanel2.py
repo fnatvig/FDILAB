@@ -3,7 +3,6 @@ import pygame
 import pygame_gui
 import socket
 import controlPanel3
-import controlPanel1
 import struct
 
 #Control panel size
@@ -31,7 +30,7 @@ def main(prev_msg):
 
 
     background = pygame.Surface((width, height))
-    background.fill(pygame.Color('#000000'))
+    background.fill(pygame.Color('#FFFFFF'))
 
     manager = pygame_gui.UIManager((width, height), 'theme.json')
     rect = pygame.Rect((width-b_width)/2, 0.75*b_height, b_width, b_height)
@@ -52,10 +51,10 @@ def main(prev_msg):
     #                                             text='Multiple Bus attack',
     #                                             manager=manager,
     #                                             anchors={'bottom': 'bottom'})
-    rect = pygame.Rect(0, 0, 75, 50) 
-    back_button = pygame_gui.elements.UIButton(relative_rect=rect,
-                                                text='Back',
-                                                manager=manager)
+    # rect = pygame.Rect(0, 0, 75, 50) 
+    # back_button = pygame_gui.elements.UIButton(relative_rect=rect,
+    #                                             text='Back',
+    #                                             manager=manager)
 
 
     clock = pygame.time.Clock()
@@ -72,9 +71,6 @@ def main(prev_msg):
 
 
             if event.type == pygame_gui.UI_BUTTON_PRESSED:
-                if event.ui_element == back_button:
-                    is_running = False
-                    controlPanel1.main(prev_msg)
                 if event.ui_element == single_button:
                     is_running = False
                     controlPanel3.main(prev_msg)
