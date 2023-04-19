@@ -305,11 +305,14 @@ def load_case14(q, q1):
     get_measurements(net, q)
     est.estimate(net, init="flat")
 
-    lc = plot.create_line_collection(net, color="silver", zorder=1) #create lines
-    bc = plot.create_bus_collection(net, net.bus.index, size=0.03, color="b", zorder=2) #create buses
+    #create lines (for plotting)
+    lc = plot.create_line_collection(net, color="silver", zorder=1)
+    #create buses (for plotting)
+    bc = plot.create_bus_collection(net, net.bus.index, size=0.03, color="b", zorder=2)
+    #create transformers (for plotting)
     tc = plot.create_trafo_collection(net, color="silver",size=0.05, zorder=1)
-    # coordsi = zip(net.bus_geodata.x.loc[buses].values-0.15, net.bus_geodata.y.loc[buses].values-0.15)
-    eg = plot.create_ext_grid_collection(net, color="black", size=0.1, zorder=3, orientation=3.14159)
+    #Create external grid connection (for plotting)
+    eg = plot.create_ext_grid_collection(net, color="black", size=0.1, zorder=3, orientation=3.14159) 
     
     n_ts =  500
     volatility=0.001
@@ -332,10 +335,15 @@ def load_case9(q, q1):
     print(net.bus)
     get_measurements(net, q)
     est.estimate(net, init="flat")
-    lc = plot.create_line_collection(net, color="silver", zorder=1) #create lines
-    bc = plot.create_bus_collection(net, net.bus.index, size=0.03, color="b", zorder=2) #create buses
+    
+    #create lines (for plotting)
+    lc = plot.create_line_collection(net, color="silver", zorder=1)
+    #create buses (for plotting)
+    bc = plot.create_bus_collection(net, net.bus.index, size=0.03, color="b", zorder=2)
+    #create transformers (for plotting)
     tc = plot.create_trafo_collection(net, color="silver",size=0.05, zorder=1)
-    eg = plot.create_ext_grid_collection(net, color="black", size=0.1, zorder=3, orientation=3.14159)
+    #Create external grid connection (for plotting)
+    eg = plot.create_ext_grid_collection(net, color="black", size=0.1, zorder=3, orientation=3.14159) 
     
     n_ts =  500
     volatility=0.001
@@ -344,23 +352,3 @@ def load_case9(q, q1):
 
 
     plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # for i in range(len(net.bus.index)):
-    #     pp.create_measurement(net, "v", "bus", 1, 0, net.bus.iloc[i].name)
