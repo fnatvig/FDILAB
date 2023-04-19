@@ -347,7 +347,7 @@ def load_case9(q, q1):
     eg = plot.create_ext_grid_collection(net, color="black", size=0.1, zorder=3, orientation=3.14159) 
     
     n_ts =  500
-    volatility=0.0005
+    volatility=0.01
     lsf_values, lsf = create_load_profile(net, n_ts, volatility)
     ani = animation.FuncAnimation(fig, animate, fargs=(net, ax, lc, bc, tc, eg, lsf, base_values, q, q1), interval=500, frames=100) 
 
