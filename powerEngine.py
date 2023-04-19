@@ -10,6 +10,7 @@ import pandas as pd
 from copy import copy
 import queue
 import struct
+import os
 from FDIA import *
 
 import matplotlib.animation as animation
@@ -102,8 +103,11 @@ def main():
                 p1.join()
             if p2.is_alive():
                 p2.join()
+            quit_struct = struct.pack("f f", 0.0, 0.0)
+            sock.sendto(quit_struct, (UDP_IP, PLOT_PORT))
             sock.shutdown(socket.SHUT_RDWR)
             sock.close()
+            os._exit(0) 
             running = 0
 
 # Used to create a random load profile (to make the simulation appear realistic over time)
@@ -164,7 +168,7 @@ def get_measurements(net, q):
         attack=q.get(False)
         attack.fill_attack_vector(net)
         bus_data, line_data, trafo_data = attack.execute_attack(bus_data, line_data, trafo_data)
-        print(attack.get_attributes())
+        # print(attack.get_attributes())
         atr1, atr2, atr3, atr4, atr5, atr6, atr7 = attack.get_attributes()
         last_attack = FDIA(atr1, atr2, atr3, atr4, atr5, atr6)
         last_attack.fill_attack_vector(net)
@@ -175,6 +179,7 @@ def get_measurements(net, q):
 
     # to keep the last attack vector
     if last_attack.active:
+        last_attack.fill_attack_vector(net)
         bus_data, line_data, trafo_data = last_attack.execute_attack(bus_data, line_data, trafo_data)
 
     # Gathers the measurements (with added gaussian noise)
@@ -226,10 +231,10 @@ def alarm(buses, vm_pu, vm_kv, max_pu, min_pu):
     return vm_kvr, vm_kvb, busesr, busesb
 
 # The main animation loop (running the power flow, measurment gathering, state estimation etc...)
-def animate(i, net, ax, lc, bc, tc, load_list, bv, q, q1):
+def animate(i, net, ax, lc, bc, tc, eg, load_list, bv, q, q1):
     global sock
     global toggle_plot
-    draw_list = [lc, bc, tc]
+    draw_list = [lc, bc, tc, eg]
     net.load.loc[:, "p_mw"] *= load_list[i][:] 
     if len(net.bus.index)<14:
         del draw_list[2]
@@ -265,23 +270,23 @@ def animate(i, net, ax, lc, bc, tc, load_list, bv, q, q1):
 
     #  tuples of coordinates for drawing the values on the map
     coordsi = zip(net.bus_geodata.x.loc[buses].values-0.15, net.bus_geodata.y.loc[buses].values-0.15) 
-    coords_r = zip(net.bus_geodata.x.loc[busesr].values+0.1, net.bus_geodata.y.loc[busesr].values+0.1)
-    coords_b = zip(net.bus_geodata.x.loc[busesb].values+0.1, net.bus_geodata.y.loc[busesb].values+0.1)
-    coords_r_e = zip(net.bus_geodata.x.loc[busesr_est].values+0.1, net.bus_geodata.y.loc[busesr_est].values-0.1)
-    coords_b_e = zip(net.bus_geodata.x.loc[busesb_est].values+0.1, net.bus_geodata.y.loc[busesb_est].values-0.1)
-    bic_idx = plot.create_annotation_collection(size=0.1, texts=np.char.mod('%d', buses), coords=coordsi, zorder=3, color="blue")
+    coords_r = zip(net.bus_geodata.x.loc[busesr].values-0.3, net.bus_geodata.y.loc[busesr].values+0.18)
+    coords_b = zip(net.bus_geodata.x.loc[busesb].values-0.3, net.bus_geodata.y.loc[busesb].values+0.18)
+    coords_r_e = zip(net.bus_geodata.x.loc[busesr_est].values-0.3, net.bus_geodata.y.loc[busesr_est].values+0.05)
+    coords_b_e = zip(net.bus_geodata.x.loc[busesb_est].values-0.3, net.bus_geodata.y.loc[busesb_est].values+0.05)
+    bic_idx = plot.create_annotation_collection(size=0.13, texts=np.char.mod('%d', buses), coords=coordsi, zorder=3, color="blue")
     draw_list.append(bic_idx)
     if not len(vm_kvr)==0:
-        bic_r = plot.create_annotation_collection(size=0.1, texts=np.char.add(np.char.mod('%f', vm_kvr), ' kV'), coords=coords_r, zorder=3, color=(0, 0, 1, 0.5))
+        bic_r = plot.create_annotation_collection(size=0.13, texts=np.char.add(np.char.mod('%.4f', vm_kvr), ' kV'), coords=coords_r, zorder=3, color=(0, 0, 1, 0.5))
         draw_list.append(bic_r)
     if not len(vm_kvb)==0: 
-        bic_b = plot.create_annotation_collection(size=0.1, texts=np.char.add(np.char.mod('%f', vm_kvb), ' kV'), coords=coords_b, zorder=3, color=(0, 0, 1, 0.5))
+        bic_b = plot.create_annotation_collection(size=0.13, texts=np.char.add(np.char.mod('%.4f', vm_kvb), ' kV'), coords=coords_b, zorder=3, color=(0, 0, 1, 0.5))
         draw_list.append(bic_b)
     if not len(vm_kvr_est)==0: 
-        bic_r_est = plot.create_annotation_collection(size=0.1, texts=np.char.add(np.char.mod('%f', vm_kvr_est), ' kV'), coords=coords_r_e, zorder=3, color=(1, 0, 0, 1))
+        bic_r_est = plot.create_annotation_collection(size=0.13, texts=np.char.add(np.char.mod('%.4f', vm_kvr_est), ' kV'), coords=coords_r_e, zorder=3, color=(1, 0, 0, 1))
         draw_list.append(bic_r_est)
     if not len(vm_kvb_est)==0: 
-        bic_b_est = plot.create_annotation_collection(size=0.1, texts=np.char.add(np.char.mod('%f', vm_kvb_est), ' kV'), coords=coords_b_e, zorder=3, color=(0, 0, 0, 0.5))
+        bic_b_est = plot.create_annotation_collection(size=0.13, texts=np.char.add(np.char.mod('%.4f', vm_kvb_est), ' kV'), coords=coords_b_e, zorder=3, color=(0, 0, 0, 0.5))
         draw_list.append(bic_b_est)
 
     plt.cla()
@@ -294,7 +299,7 @@ def load_case14(q, q1):
     net = nw.case14()
 
     base_values = net.bus.iloc[:]['vn_kv'].tolist()
-    fig, ax = plt.subplots(figsize=(8, 8))
+    fig, ax = plt.subplots(figsize=(7, 7))
 
     pp.runpp(net, run_control=True)
     get_measurements(net, q)
@@ -303,13 +308,15 @@ def load_case14(q, q1):
     lc = plot.create_line_collection(net, color="silver", zorder=1) #create lines
     bc = plot.create_bus_collection(net, net.bus.index, size=0.03, color="b", zorder=2) #create buses
     tc = plot.create_trafo_collection(net, color="silver",size=0.05, zorder=1)
+    # coordsi = zip(net.bus_geodata.x.loc[buses].values-0.15, net.bus_geodata.y.loc[buses].values-0.15)
+    eg = plot.create_ext_grid_collection(net, color="black", size=0.1, zorder=3, orientation=3.14159)
     
     n_ts =  500
     volatility=0.001
     lsf_values, lsf = create_load_profile(net, n_ts, volatility)
 
 
-    ani = animation.FuncAnimation(fig, animate, fargs=(net, ax, lc, bc, tc, lsf, base_values, q, q1), interval=500, frames=100) 
+    ani = animation.FuncAnimation(fig, animate, fargs=(net, ax, lc, bc, tc, eg, lsf, base_values, q, q1), interval=500, frames=100) 
 
 
     plt.show()
@@ -320,7 +327,7 @@ def load_case9(q, q1):
     # loads the IEEE 9-bus test case
     net = nw.case9()
     base_values = net.bus.iloc[:]['vn_kv'].tolist()
-    fig, ax = plt.subplots(figsize=(8, 8))
+    fig, ax = plt.subplots(figsize=(7, 7))
     pp.runpp(net, run_control=True)
     print(net.bus)
     get_measurements(net, q)
@@ -328,11 +335,12 @@ def load_case9(q, q1):
     lc = plot.create_line_collection(net, color="silver", zorder=1) #create lines
     bc = plot.create_bus_collection(net, net.bus.index, size=0.03, color="b", zorder=2) #create buses
     tc = plot.create_trafo_collection(net, color="silver",size=0.05, zorder=1)
+    eg = plot.create_ext_grid_collection(net, color="black", size=0.1, zorder=3, orientation=3.14159)
     
     n_ts =  500
     volatility=0.001
     lsf_values, lsf = create_load_profile(net, n_ts, volatility)
-    ani = animation.FuncAnimation(fig, animate, fargs=(net, ax, lc, bc, tc, lsf, base_values, q, q1), interval=500, frames=100) 
+    ani = animation.FuncAnimation(fig, animate, fargs=(net, ax, lc, bc, tc, eg, lsf, base_values, q, q1), interval=500, frames=100) 
 
 
     plt.show()
