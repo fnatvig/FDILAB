@@ -29,7 +29,7 @@ def main():
 
 
     background = pygame.Surface((width, height))
-    background.fill(pygame.Color('#000000'))
+    background.fill(pygame.Color('#FFFFFF'))
 
     manager = pygame_gui.UIManager((width, height), 'theme.json')
 
