@@ -24,8 +24,11 @@ def animate(i, q):
     try:
         data = q.get(False)
         y1_new, y2_new = struct.unpack('f f', data)
+        if (y1_new==0.0) and (y2_new==0.0):
+                plt.close()
         y1.append(y1_new)
         y2.append(y2_new)
+        # print(y1)
         x.append(i)
         if flag or (len(y1)>20):
             del y1[0]
@@ -44,7 +47,7 @@ def animate(i, q):
     plt.tight_layout()
 
 def child_process(q):
-    ani = FuncAnimation(plt.gcf(), animate, fargs=(q,), interval=100)
+    ani = FuncAnimation(plt.gcf(), animate, fargs=(q,), interval=100, cache_frame_data=False)
     plt.tight_layout()
     plt.show()
 
@@ -61,11 +64,16 @@ def main():
     
     p1 = Process(target=child_process, args=(plot_queue,))
     p1.start()
-
-    while True:
+    is_running = True
+    while is_running:
         try:
             data = sock.recv(1024)
+            unpack = struct.unpack("f f", data)
+            if (unpack[0]==0.0) and (unpack[1]==0.0):
+                is_running = False
+                sock.shutdown(socket.SHUT_RDWR)
+                sock.close()
+                os._exit(0) 
             plot_queue.put(data)
         except socket.error:
             pass
-
