@@ -18,7 +18,7 @@ The application is only tested with python version Python 3.10.10, although I be
 7. You also have the possibility to send single bus attacks into the network and observe how the network reacts. This is done by clicking the "single bus attack" button.
 
 # How to interpret the results
-As for now, the map only shows how the actual and estimated voltage magnitudes vary with time. As written in the previous section, the values shown in blue (acquired with the pandapower powerflow calculator) should be interpreted as the ground truth. The black values are the resulting values of the state estimation. The black values turn red if the estimates fall outside of their specified ranges which are given in the test cases. 
+As for now, the map only shows how the actual and estimated voltage magnitudes vary with time. As written in the previous section, the values shown in blue (acquired with the pandapower powerflow calculator) should be interpreted as the ground truth. The black values are the resulting values of the state estimation. The black values turn red if the estimates fall outside of their specified ranges which are given in the test cases (referred to as "optimal power flow parameters" in the pandapower documantation). 
 
 # System Architecture
 This section aims to describe the application's overall architecture. After reading this section, you will get a general sense of the most relevant components of the application and the different frameworks used. However, to understand the application more in-depth, please turn to the comments in the code. 
