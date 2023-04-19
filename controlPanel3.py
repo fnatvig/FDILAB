@@ -31,23 +31,23 @@ def main(prev_msg):
 
 
     background = pygame.Surface((width, height))
-    background.fill(pygame.Color('#000000'))
+    background.fill(pygame.Color('#FFFFFF'))
     
     manager = pygame_gui.UIManager((width, height), 'theme.json')
 
     # label_layout = pygame.Rect(0, 50, 75, 50)
     # label = pygame_gui.elements.UITextBox("Bus: ", relative_rect=label_layout, manager=manager)
-    rect = pygame.Rect(0, 50, 75, 50)
+    rect = pygame.Rect(225, 0, 75, 50)
     pygame_gui.elements.UILabel(rect, text="Bus:", manager=manager)
     bus_list = list(range(int(prev_msg))) 
     bus_list = [str(i) for i in bus_list]
-    rect = pygame.Rect(75, 50, 75, 50)
+    rect = pygame.Rect(300, 0, 75, 50)
     bus_menu = pygame_gui.elements.UIDropDownMenu(bus_list, starting_option=bus_list[0], relative_rect=rect, manager=manager)
 
-    rect = pygame.Rect(200, 50, 200, 50)
+    rect = pygame.Rect(100, 50, 200, 50)
     pygame_gui.elements.UILabel(rect, text="Measurement type:", manager=manager)
     m_list = ["Voltage", "Active Power", "Reactive Power"]
-    rect = pygame.Rect(400, 50, 200, 50)
+    rect = pygame.Rect(300, 50, 200, 50)
     m_menu = pygame_gui.elements.UIDropDownMenu(m_list, starting_option=m_list[0], relative_rect=rect, manager=manager)
 
     rect = pygame.Rect(0, 100, 100, 50)
