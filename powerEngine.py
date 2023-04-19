@@ -114,19 +114,18 @@ def main():
 def create_load_profile(net, n_ts=24, volatility=0.05):
     n = len(net.load.index)
     lsf = np.zeros([n_ts,n])
-    l_indx = np.ones([1,n])
-    init_value = 1
+    # init_value = 1
     lsf_values = np.zeros(n_ts)
-    lsf_values[0] = init_value
-    for i in range(1,n_ts):
+    # lsf_values[0] = init_value
+    for i in range(0,n_ts):
         new_value=volatility*np.random.rand()
         if np.random.rand() > 0.5:
-            lsf_values[i] = lsf_values[i-1]+new_value
+            lsf_values[i] = new_value
         else:
-            lsf_values[i] = lsf_values[i-1]-new_value
+            lsf_values[i] = -new_value
 
     for i in range(n_ts):
-        lsf[i,:] = l_indx * lsf_values[i]
+        lsf[i,:] = 1 + lsf_values[i]
     
     return lsf_values, lsf
 
@@ -231,11 +230,12 @@ def alarm(buses, vm_pu, vm_kv, max_pu, min_pu):
     return vm_kvr, vm_kvb, busesr, busesb
 
 # The main animation loop (running the power flow, measurment gathering, state estimation etc...)
-def animate(i, net, ax, lc, bc, tc, eg, load_list, bv, q, q1):
+def animate(i, net, ax, lc, bc, tc, eg, load_list_p, load_list_q, bv, q, q1):
     global sock
     global toggle_plot
     draw_list = [lc, bc, tc, eg]
-    net.load.loc[:, "p_mw"] *= load_list[i][:] 
+    net.load.loc[:, "p_mw"] *= load_list_p[i][:] 
+    net.load.loc[:, "q_mvar"] *= load_list_q[i][:] 
     if len(net.bus.index)<14:
         del draw_list[2]
     plot.draw_collections(draw_list, ax=ax)
@@ -317,10 +317,9 @@ def load_case14(q, q1):
     
     n_ts =  500
     volatility=0.01
-    lsf_values, lsf = create_load_profile(net, n_ts, volatility)
-
-
-    ani = animation.FuncAnimation(fig, animate, fargs=(net, ax, lc, bc, tc, eg, lsf, base_values, q, q1), interval=500, frames=100, cache_frame_data=False) 
+    lsf_values, lsfp = create_load_profile(net, n_ts, volatility)
+    lsf_values, lsfq = create_load_profile(net, n_ts, volatility)
+    ani = animation.FuncAnimation(fig, animate, fargs=(net, ax, lc, bc, tc, eg, lsfp, lsfq, base_values, q, q1), interval=500, frames=100, cache_frame_data=False) 
 
 
     plt.show()
@@ -348,8 +347,11 @@ def load_case9(q, q1):
     
     n_ts =  500
     volatility=0.01
-    lsf_values, lsf = create_load_profile(net, n_ts, volatility)
-    ani = animation.FuncAnimation(fig, animate, fargs=(net, ax, lc, bc, tc, eg, lsf, base_values, q, q1), interval=500, frames=100) 
+    lsf_values, lsfp = create_load_profile(net, n_ts, volatility)
+    lsf_values, lsfq = create_load_profile(net, n_ts, volatility)
+    plt.plot(lsfp)
+    plt.plot(lsfq)
+    ani = animation.FuncAnimation(fig, animate, fargs=(net, ax, lc, bc, tc, eg, lsfp, lsfq, base_values, q, q1), interval=500, frames=100, cache_frame_data=False) 
 
 
     plt.show()
