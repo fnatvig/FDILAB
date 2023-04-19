@@ -239,9 +239,10 @@ def animate(i, net, ax, lc, bc, tc, eg, load_list, bv, q, q1):
     if len(net.bus.index)<14:
         del draw_list[2]
     plot.draw_collections(draw_list, ax=ax)
-    pp.runpp(net, run_control=True, max_iteration=100)
+    
+    pp.runpp(net, run_control=True, max_iteration=50, calculate_voltage_angles=True, init="results")
     get_measurements(net, q)
-    est.estimate(net)
+    est.estimate(net, calculate_voltage_angles=True, init="results")
 
 
     buses = net.bus.index.tolist() # list of all bus indices
@@ -301,9 +302,9 @@ def load_case14(q, q1):
     base_values = net.bus.iloc[:]['vn_kv'].tolist()
     fig, ax = plt.subplots(figsize=(7, 7))
 
-    pp.runpp(net, run_control=True)
+    pp.runpp(net, run_control=True, calculate_voltage_angles=True, init='dc')
     get_measurements(net, q)
-    est.estimate(net, init="flat")
+    est.estimate(net, calculate_voltage_angles=True, init="flat")
 
     #create lines (for plotting)
     lc = plot.create_line_collection(net, color="silver", zorder=1)
@@ -315,11 +316,11 @@ def load_case14(q, q1):
     eg = plot.create_ext_grid_collection(net, color="black", size=0.1, zorder=3, orientation=3.14159) 
     
     n_ts =  500
-    volatility=0.001
+    volatility=0.01
     lsf_values, lsf = create_load_profile(net, n_ts, volatility)
 
 
-    ani = animation.FuncAnimation(fig, animate, fargs=(net, ax, lc, bc, tc, eg, lsf, base_values, q, q1), interval=500, frames=100) 
+    ani = animation.FuncAnimation(fig, animate, fargs=(net, ax, lc, bc, tc, eg, lsf, base_values, q, q1), interval=500, frames=100, cache_frame_data=False) 
 
 
     plt.show()
@@ -331,10 +332,10 @@ def load_case9(q, q1):
     net = nw.case9()
     base_values = net.bus.iloc[:]['vn_kv'].tolist()
     fig, ax = plt.subplots(figsize=(7, 7))
-    pp.runpp(net, run_control=True)
+    pp.runpp(net, run_control=True, calculate_voltage_angles=True, init='dc')
     print(net.bus)
     get_measurements(net, q)
-    est.estimate(net, init="flat")
+    est.estimate(net, calculate_voltage_angles=True, init="flat")
     
     #create lines (for plotting)
     lc = plot.create_line_collection(net, color="silver", zorder=1)
@@ -346,7 +347,7 @@ def load_case9(q, q1):
     eg = plot.create_ext_grid_collection(net, color="black", size=0.1, zorder=3, orientation=3.14159) 
     
     n_ts =  500
-    volatility=0.001
+    volatility=0.0005
     lsf_values, lsf = create_load_profile(net, n_ts, volatility)
     ani = animation.FuncAnimation(fig, animate, fargs=(net, ax, lc, bc, tc, eg, lsf, base_values, q, q1), interval=500, frames=100) 
 
