@@ -9,7 +9,7 @@ The application is only tested with python version Python 3.10.10, although I be
 5. pygame_gui https://pygame-gui.readthedocs.io/en/v_067/
 
 # Instructions
-1. Clone the repo and cd into it with a terminal/cmd
+1. Clone the repo, cd into it with git bash, run the command ``` git checkout stable ``` (to change to the stable branch). 
 2. Run the command: python main.py
 3. Wait until the control panel window pops up
 4. Click on one of the buttons and wait until a second window pops up. 
