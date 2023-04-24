@@ -5,7 +5,7 @@
          {
              "normal_bg": "#45494e",
              "selected_bg": "#55595e",
-             "normal_text": "#AAAAAA",
+             "normal_text": "#FFFFFF",
              "selected_text": "#FFFFFF",
              "border": "#FFFFFF"
          },
@@ -42,8 +42,8 @@
      {
          "colours":
          {
-             "dark_bg": "#000000",
-             "normal_text": "#AAAAAA",
+             "dark_bg": "#FFFFFF",
+             "normal_text": "#000000",
              "text_shadow": "#505050"
          },
          "misc":
