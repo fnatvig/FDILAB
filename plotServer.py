@@ -6,10 +6,12 @@ import numpy as np
 import queue
 import os
 import struct
+from constants import *
 
 
 UDP_IP = "127.0.0.1"
 UDP_PORT = 5006
+GUI_PORT = 5010
 condition = True 
 x = [0]
 y1 = [0]
@@ -57,8 +59,11 @@ def main():
     i = 0
     plot_queue = Queue()
     plt.style.use('fivethirtyeight')
-    print("Plot Server is up and running!")
+    # print("Plot Server is up and running!")
+    sock.sendto(PLOTSERVER_READY, (UDP_IP, GUI_PORT))
+    
     data = sock.recv(1024)
+
     if data == b'1':
         sock.setblocking(0)
     

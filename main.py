@@ -1,22 +1,28 @@
-import os
-os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 from multiprocessing import Process
-import controlPanel1
-import powerEngine
+
 import plotServer
-import time
+import powerEngine_old
+from PowerEngine import *
+from GUI.PageOne import *
+from GUI.PageTwo import *
+from GUI.PageThree import *
+from GUI.GuiApp import *
+
 
 # This is the main function of the whole application
 if __name__ == "__main__": 
-    # Like the name suggests, this process is responsible for the actual 
-    # power grid simulation. This is where most things happen
-    p1 = Process(target=powerEngine.main)
-    p1.start()
-    # This process is responsible for the gui (mostlly based on a module named "pygame")
-    p2 = Process(target=controlPanel1.main)
-    p2.start()
-    # This process is responsible for single bus plotting
-    p3 = Process(target=plotServer.main)
-    p3.start()
+     
+#     p = [Process(target=powerEngine_old.main), 
+     #      Process(target=plotServer.main)] 
+     # p[0].start(), p[1].start()
+     
+     app = GuiApp()
+     powerengine = PowerEngine()
+     p = [Process(target=powerengine.main), 
+          Process(target=plotServer.main)] 
+     p[0].start(), p[1].start()
+     app.wait_for_confirmation()
+     app.protocol("WM_DELETE_WINDOW", lambda: app.on_closing(p))
+     app.mainloop()
 
 
