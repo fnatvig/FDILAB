@@ -1,6 +1,6 @@
 import tkinter as tk
 
-class AttackCtrl3(tk.Frame):
+class AttackPage2(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller

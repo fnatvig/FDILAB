@@ -3,12 +3,12 @@ from socket import *
 from multiprocessing import *
 
 from constants import *
-from GUI.SimCtrl3 import *
-from GUI.AttackCtrl1 import *
+from GUI.CtrlPage3 import *
+from GUI.AttackWindow import *
 
 
 
-class SimCtrl2(tk.Frame):
+class CtrlPage2(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
@@ -25,5 +25,7 @@ class SimCtrl2(tk.Frame):
     def send_msg(self, msg):
         self.controller.socket.sendto(msg, (UDP_IP, POWER_PORT))
         if msg == START_SIM:
-            app = AttackCtrl1()
+            bus_list = list(range(14)) 
+            bus_list = [str(i) for i in bus_list]
+            win = AttackWindow(bus_list)
         

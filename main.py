@@ -3,10 +3,10 @@ from multiprocessing import Process
 import plotServer
 import powerEngine_old
 from PowerEngine import *
-from GUI.SimCtrl1 import *
-from GUI.SimCtrl2 import *
-from GUI.SimCtrl3 import *
-from GUI.GuiApp import *
+from GUI.CtrlPage1 import *
+from GUI.CtrlPage2 import *
+from GUI.CtrlPage3 import *
+from GUI.CtrlWindow import *
 
 
 # This is the main function of the whole application
@@ -16,13 +16,13 @@ if __name__ == "__main__":
      #      Process(target=plotServer.main)] 
      # p[0].start(), p[1].start()
      
-     app = GuiApp()
+     ctrl = CtrlWindow()
      powerengine = PowerEngine()
      p = [Process(target=powerengine.main), 
           Process(target=plotServer.main)] 
      p[0].start(), p[1].start()
-     app.wait_for_confirmation()
-     app.protocol("WM_DELETE_WINDOW", lambda: app.on_closing(p))
-     app.mainloop()
+     ctrl.wait_for_confirmation()
+     ctrl.protocol("WM_DELETE_WINDOW", lambda: ctrl.on_closing(p))
+     ctrl.mainloop()
 
 

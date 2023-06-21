@@ -2,11 +2,11 @@ import tkinter as tk
 from socket import *
 
 from constants import *
-from GUI.SimCtrl1 import *
-from GUI.SimCtrl2 import *
-from GUI.AttackCtrl1 import *
+from GUI.CtrlPage1 import *
+from GUI.CtrlPage2 import *
+from GUI.AttackWindow import *
 
-class GuiApp(tk.Tk):
+class CtrlWindow(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
         container = tk.Frame(self)
@@ -14,7 +14,7 @@ class GuiApp(tk.Tk):
         self.socket = socket(AF_INET, SOCK_DGRAM)
         self.socket.bind(("127.0.0.1", GUI_PORT))
         self.frames = {}
-        for F in (SimCtrl1, SimCtrl2, SimCtrl3):
+        for F in (CtrlPage1, CtrlPage2, CtrlPage3):
             frame = F(container, self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
@@ -34,7 +34,7 @@ class GuiApp(tk.Tk):
             elif (msg == PLOTSERVER_READY):
                 print("Plot Server ready!")
                 counter += 1
-        self.show_page(SimCtrl1)
+        self.show_page(CtrlPage1)
 
     def on_closing(self, procs):
 
