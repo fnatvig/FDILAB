@@ -2,11 +2,7 @@
 A False Data Injection Attack (FDIA) Simulator
 
 # Prerequisites
-The application is only tested with python version Python 3.10.10, although I believe one should be able to run the application with slightly older python versions as well. However, older versions than 3.10 won't work (as the code contains "match case" statements). Other than that, there are a couple of python libraries that need to be installed beforehand:
-
-1. Pandapower https://pandapower.readthedocs.io/en/v2.10.1/about.html
-3. pygame https://www.pygame.org/news
-5. pygame_gui https://pygame-gui.readthedocs.io/en/v_067/
+The application is only tested with python version Python 3.10.10, although I believe one should be able to run the application with slightly older python versions as well. However, older versions than 3.10 won't work (as the code contains "match case" statements). Other than that, you also need to install "pandapower" (https://pandapower.readthedocs.io/en/v2.10.1/about.html).
 
 # Instructions
 1. Clone the repo, cd into it with git bash and run the command ``` git checkout stable ``` (to change to the stable branch). 
