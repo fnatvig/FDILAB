@@ -3,10 +3,12 @@ from socket import *
 from multiprocessing import *
 
 from constants import *
-from GUI.PageThree import *
+from GUI.SimCtrl3 import *
+from GUI.AttackCtrl1 import *
 
 
-class PageTwo(tk.Frame):
+
+class SimCtrl2(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
@@ -22,3 +24,6 @@ class PageTwo(tk.Frame):
 
     def send_msg(self, msg):
         self.controller.socket.sendto(msg, (UDP_IP, POWER_PORT))
+        if msg == START_SIM:
+            app = AttackCtrl1()
+        

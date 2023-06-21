@@ -72,19 +72,14 @@ class PowerEngine:
             if is_running:
 
                 base_values = self.net.bus.iloc[:]['vn_kv'].tolist()
-                fig, ax = plt.subplots(figsize=(7, 7))
 
                 pp.runpp(self.net, run_control=True, calculate_voltage_angles=True, init='dc')
                 self.get_measurements()
                 est.estimate(self.net, calculate_voltage_angles=True, init="flat")
 
-                #create lines (for plotting)
                 lc = pp.plotting.create_line_collection(self.net, color="silver", zorder=1)
-                #create buses (for plotting)
                 bc = pp.plotting.create_bus_collection(self.net, self.net.bus.index, size=0.03, color="b", zorder=2)
-                #create transformers (for plotting)
                 tc = pp.plotting.create_trafo_collection(self.net, color="silver",size=0.05, zorder=1)
-                #Create external grid connection (for plotting)
                 eg = pp.plotting.create_ext_grid_collection(self.net, color="black", size=0.1, zorder=3, orientation=3.14159) 
 
                 n_ts =  500
@@ -92,6 +87,8 @@ class PowerEngine:
                 lsfp = self.create_load_profile(n_ts, volatility)
                 lsfq = self.create_load_profile(n_ts, volatility)
                 self.update_animation = True
+                fig, ax = plt.subplots(figsize=(7, 7))
+                pp.plotting.draw_collections([lc, bc, tc, eg], ax=ax)
                 ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, lc, bc, tc, eg, lsfp, lsfq, base_values), interval=n_ts, frames=100, cache_frame_data=False) 
                 plt.show()
     
@@ -164,9 +161,7 @@ class PowerEngine:
     def create_load_profile(self, n_ts=24, volatility=0.05):
         n = len(self.net.load.index)
         lsf = np.zeros([n_ts,n])
-        # init_value = 1
         lsf_values = np.zeros(n_ts)
-        # lsf_values[0] = init_value
         for i in range(0,n_ts):
             new_value=volatility*np.random.rand()
             if np.random.rand() > 0.5:
@@ -199,7 +194,8 @@ class PowerEngine:
             est.estimate(self.net, calculate_voltage_angles=True, init="results")
 
 
-            buses = self.net.bus.index.tolist() # list of all bus indices
+            # list of all bus indices
+            buses = self.net.bus.index.tolist() 
             vm_pu = np.array(self.net.res_bus.iloc[:]['vm_pu'])
             vm_pu_est = np.array(self.net.res_bus_est.iloc[:]['vm_pu'])
             vm_kv = np.array(self.net.res_bus.iloc[:]['vm_pu'])*np.array(bv[:])

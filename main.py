@@ -3,9 +3,9 @@ from multiprocessing import Process
 import plotServer
 import powerEngine_old
 from PowerEngine import *
-from GUI.PageOne import *
-from GUI.PageTwo import *
-from GUI.PageThree import *
+from GUI.SimCtrl1 import *
+from GUI.SimCtrl2 import *
+from GUI.SimCtrl3 import *
 from GUI.GuiApp import *
 
 
