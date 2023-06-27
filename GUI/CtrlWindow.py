@@ -10,6 +10,10 @@ class CtrlWindow(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
         container = tk.Frame(self)
+
+        ws = self.winfo_screenwidth() # width of the screen
+        hs = self.winfo_screenheight()
+        self.geometry(f"+{int(2*ws/5)}+{int(hs/9)}")
         container.pack()
         self.socket = socket(AF_INET, SOCK_DGRAM)
         self.socket.bind(("127.0.0.1", GUI_PORT))

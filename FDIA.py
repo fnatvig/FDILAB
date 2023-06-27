@@ -1,6 +1,8 @@
 import pandapower as pp
 import numpy as np
 import pandas as pd
+
+from constants import *
 # Class for False Data Injection Attacks
 class FDIA:
 
@@ -24,19 +26,30 @@ class FDIA:
                         self.attack_vector = len(net.bus.index)*[1.0]
                         self.attack_vector[self.element] = self.intensity
                     # Attack on an all buses
-                    case _:
-                        self.attack_vector = len(net.bus.index)*[self.intensity]
+                    case 1:
+                        self.attack_vector = self.intensity
 
     def execute_attack(self, bus_data, line_data, trafo_data):
         match self.e_type:
             case "bus":
-                match self.m_type:
-                    case "vm_pu":
-                        bus_data.loc["vm_pu"][:]*=self.attack_vector
-                    case "p_mw":
-                        bus_data.loc["p_mw"][:]*=self.attack_vector
-                    case "q_mvar":
-                        bus_data.loc["q_mvar"][:]*=self.attack_vector
+                if type(self.m_type) == str:
+                    match self.m_type:
+                        case "vm_pu":
+                            bus_data.loc["vm_pu"][:]*=self.attack_vector
+                        case "p_mw":
+                            bus_data.loc["p_mw"][:]*=self.attack_vector
+                        case "q_mvar":
+                            bus_data.loc["q_mvar"][:]*=self.attack_vector
+                elif type(self.m_type) == list:
+                    for i in range(len(self.m_type)):
+                        match self.m_type[i]:
+                            case "vm_pu":
+                                bus_data.loc["vm_pu"][i]*=self.attack_vector[i]
+                            case "p_mw":
+                                bus_data.loc["p_mw"][i]*=self.attack_vector[i]
+                            case "q_mvar":
+                                bus_data.loc["q_mvar"][i]*=self.attack_vector[i]
+
         return bus_data, line_data, trafo_data
     
     def get_attributes(self):

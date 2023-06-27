@@ -5,6 +5,7 @@ from multiprocessing import *
 from constants import *
 from GUI.CtrlPage3 import *
 from GUI.AttackWindow import *
+from GUI.ExportWindow import *
 
 
 
@@ -12,20 +13,46 @@ class CtrlPage2(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-
+        self.startup = True
         label = tk.Label(self, text="Page Two")
-        label.pack(pady=10, padx=10)
+        label.pack(side=tk.TOP)
 
-        button1 = tk.Button(self, text="Start", command=lambda: self.send_msg(START_SIM))
-        button1.pack()
+        self.button1 = tk.Button(self, text="Start", command=lambda: self.start_sim())
+        self.button1.pack(side=tk.LEFT, padx=10)
 
-        button2 = tk.Button(self, text="Pause", command=lambda: self.send_msg(PAUSE_SIM))
-        button2.pack()
+        self.button2 = tk.Button(self, text="Pause", command=lambda: self.pause_sim())
+        self.button2["state"] = "disabled"
+        self.button2.pack(side=tk.LEFT, padx=10)
 
-    def send_msg(self, msg):
-        self.controller.socket.sendto(msg, (UDP_IP, POWER_PORT))
-        if msg == START_SIM:
-            bus_list = list(range(14)) 
-            bus_list = [str(i) for i in bus_list]
+        self.button3 = tk.Button(self, text="Export data", command=lambda: self.export_data())
+        self.button3["state"] = "disabled"
+        self.button3.pack(side=tk.LEFT, padx=10)
+
+    def start_sim(self):
+        self.controller.socket.sendto(START_SIM, (UDP_IP, POWER_PORT))
+        self.button1["state"] = "disabled"
+        self.button2["state"] = "active"
+
+        if (self.startup):
+            self.startup = False
+            self.button3["state"] = "active"
+            bus_list = [str(list(range(int(self.controller.number_of_buses)))[i]) for i in list(range(int(self.controller.number_of_buses)))]
             win = AttackWindow(bus_list)
+
+    def pause_sim(self):
+        self.controller.socket.sendto(PAUSE_SIM, (UDP_IP, POWER_PORT))
+        if (self.button1["state"] == "disabled"):
+            self.button1["state"] = "active"
+            self.button2["state"] = "disabled"
+        
+    
+    def export_data(self):
+        self.controller.socket.sendto(SAVE_SIM, (UDP_IP, POWER_PORT))
+        bus_list = [str(list(range(int(self.controller.number_of_buses)))[i]) for i in list(range(int(self.controller.number_of_buses)))]
+        win = ExportWindow(bus_list)
+
+        # if (msg == SAVE_SIM) and (self.button1["state"] == "disabled"):
+            
+
+
         

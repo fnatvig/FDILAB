@@ -44,9 +44,9 @@ class PowerEngine:
 
         sim_process = Process(target=self.sim)
         sim_started = False
+        buses, m_types, intensities = [], [], []
         while True:
             msg = self.socket.recv(1024)
-        
             if msg == START_SIM:
                 if not sim_started:
                     sim_process.start() 
@@ -58,6 +58,58 @@ class PowerEngine:
 
             elif msg == KILL_SIM:
                 sim_process.kill()
+
+            elif msg == SAVE_SIM:
+                sim_process.kill()
+
+            unpacked = struct.unpack("i 12x", msg)
+            if unpacked[0] == MULTI_BUS_ATTACK:
+                bus, me_type, intensity = struct.unpack('i i s f', msg)[1:]
+                m_type = None
+                if me_type == b'v':
+                    m_type = "vm_pu"
+                elif me_type == b'p':
+                    m_type = "p_mw"
+                else:
+                    m_type = "q_mvar"
+                buses.append(bus)
+                m_types.append(m_type)
+                intensities.append(intensity)
+                # print(intensities)
+            elif unpacked[0] == LAST_ATTACK_MSG:
+                bus, me_type, intensity = struct.unpack('i i s f', msg)[1:]
+                m_type = None
+                if me_type == b'v':
+                    m_type = "vm_pu"
+                elif me_type == b'p':
+                    m_type = "p_mw"
+                else:
+                    m_type = "q_mvar"
+                buses.append(bus)
+                m_types.append(m_type)
+                intensities.append(intensity)
+                print(intensities)
+                if len(buses) == len(self.net.bus.index):
+                    attack = FDIA(True, "bus", buses, m_types, 1, intensities)
+                    buses, m_types, intensities = [], [], []
+                    self.attack_queue.put(attack)
+
+
+            elif unpacked[0] == SINGLE_BUS_ATTACK:
+                bus, me_type, intensity = struct.unpack('i i s f', msg)[1:]
+                m_type = None
+                if me_type == b'v':
+                    m_type = "vm_pu"
+                elif me_type == b'p':
+                    m_type = "p_mw"
+                else:
+                    m_type = "q_mvar"
+                
+                attack = FDIA(True, "bus", bus, m_type, 0, intensity)
+
+                # The FDIA instance is added to the queue attackQueue to be able to access it 
+                # from all processes   
+                self.attack_queue.put(attack)
 
     def sim(self):
         i = 0
@@ -77,19 +129,22 @@ class PowerEngine:
                 self.get_measurements()
                 est.estimate(self.net, calculate_voltage_angles=True, init="flat")
 
-                lc = pp.plotting.create_line_collection(self.net, color="silver", zorder=1)
+                lc = pp.plotting.create_line_collection(self.net, color="black", zorder=1)
                 bc = pp.plotting.create_bus_collection(self.net, self.net.bus.index, size=0.03, color="b", zorder=2)
-                tc = pp.plotting.create_trafo_collection(self.net, color="silver",size=0.05, zorder=1)
-                eg = pp.plotting.create_ext_grid_collection(self.net, color="black", size=0.1, zorder=3, orientation=3.14159) 
+                tc = pp.plotting.create_trafo_collection(self.net, color="black", size=0.05, zorder=1)
+                eg = pp.plotting.create_ext_grid_collection(self.net, color="black", size=0.1, zorder=1, orientation=3.14159) 
+                loadc = pp.plotting.create_load_collection(self.net, color="black", zorder=1, size=0.1) 
+                genc = pp.plotting.create_gen_collection(self.net, size=0.1, color="black", zorder=1, orientation=3.14159*2) 
 
                 n_ts =  500
                 volatility=0.01
                 lsfp = self.create_load_profile(n_ts, volatility)
                 lsfq = self.create_load_profile(n_ts, volatility)
                 self.update_animation = True
-                fig, ax = plt.subplots(figsize=(7, 7))
+                fig, ax = plt.subplots(figsize=(6, 6))
+                plt.subplots_adjust(left=0.0, bottom=0.0, top=1.0, right=1.0)
                 pp.plotting.draw_collections([lc, bc, tc, eg], ax=ax)
-                ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, lc, bc, tc, eg, lsfp, lsfq, base_values), interval=n_ts, frames=100, cache_frame_data=False) 
+                ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, lc, bc, tc, eg, loadc, genc, lsfp, lsfq, base_values), interval=50, cache_frame_data=False) 
                 plt.show()
     
     def get_measurements(self):
@@ -175,14 +230,13 @@ class PowerEngine:
         return lsf
     
     # The main animation loop (running the power flow, measurment gathering, state estimation etc...)
-    def animate(self, i, ax, lc, bc, tc, eg, load_list_p, load_list_q, bv):
+    def animate(self, i, ax, lc, bc, tc, eg, loadc, genc, load_list_p, load_list_q, bv):
         try:
             self.update_animation = self.sim_queue.get(False)
-            print(self.update_animation)
         except queue.Empty:
             pass
         if self.update_animation:
-            draw_list = [lc, bc, tc, eg]
+            draw_list = [lc, bc, tc, eg, loadc, genc]
             self.net.load.loc[:, "p_mw"] *= load_list_p[i][:] 
             self.net.load.loc[:, "q_mvar"] *= load_list_q[i][:] 
             if len(self.net.bus.index)<14:
@@ -191,6 +245,8 @@ class PowerEngine:
             
             pp.runpp(self.net, run_control=True, max_iteration=50, calculate_voltage_angles=True, init="results")
             self.get_measurements()
+
+
             est.estimate(self.net, calculate_voltage_angles=True, init="results")
 
 
@@ -202,6 +258,8 @@ class PowerEngine:
             vm_kv_est = np.array(self.net.res_bus_est.iloc[:]['vm_pu'])*np.array(bv[:])
             min = np.array(self.net.bus.iloc[:]['min_vm_pu'])*vm_pu
             max = np.array(self.net.bus.iloc[:]['max_vm_pu'])*vm_pu
+
+            
 
             if self.toggle_plot:
                 plot_data = struct.pack("f f", vm_pu[0], vm_pu_est[0])
@@ -221,23 +279,23 @@ class PowerEngine:
 
             #  tuples of coordinates for drawing the values on the map
             coordsi = zip(self.net.bus_geodata.x.loc[buses].values-0.15, self.net.bus_geodata.y.loc[buses].values-0.15) 
-            coords_r = zip(self.net.bus_geodata.x.loc[busesr].values-0.3, self.net.bus_geodata.y.loc[busesr].values+0.18)
-            coords_b = zip(self.net.bus_geodata.x.loc[busesb].values-0.3, self.net.bus_geodata.y.loc[busesb].values+0.18)
-            coords_r_e = zip(self.net.bus_geodata.x.loc[busesr_est].values-0.3, self.net.bus_geodata.y.loc[busesr_est].values+0.05)
-            coords_b_e = zip(self.net.bus_geodata.x.loc[busesb_est].values-0.3, self.net.bus_geodata.y.loc[busesb_est].values+0.05)
+            coords_r = zip(self.net.bus_geodata.x.loc[busesr].values-0.3, self.net.bus_geodata.y.loc[busesr].values+0.05)
+            coords_b = zip(self.net.bus_geodata.x.loc[busesb].values-0.3, self.net.bus_geodata.y.loc[busesb].values+0.05)
+            coords_r_e = zip(self.net.bus_geodata.x.loc[busesr_est].values-0.3, self.net.bus_geodata.y.loc[busesr_est].values+0.18)
+            coords_b_e = zip(self.net.bus_geodata.x.loc[busesb_est].values-0.3, self.net.bus_geodata.y.loc[busesb_est].values+0.18)
             bic_idx = pp.plotting.create_annotation_collection(size=0.13, texts=np.char.mod('%d', buses), coords=coordsi, zorder=3, color="blue")
             draw_list.append(bic_idx)
             if not len(vm_kvr)==0:
                 bic_r = pp.plotting.create_annotation_collection(size=0.13, texts=np.char.add(np.char.mod('%.4f', vm_kvr), ' kV'), coords=coords_r, zorder=3, color=(0, 0, 1, 0.5))
                 draw_list.append(bic_r)
             if not len(vm_kvb)==0: 
-                bic_b = pp.plotting.create_annotation_collection(size=0.13, texts=np.char.add(np.char.mod('%.4f', vm_kvb), ' kV'), coords=coords_b, zorder=3, color=(0, 0, 1, 0.5))
+                bic_b = pp.plotting.create_annotation_collection(size=0.13, texts=np.char.add(np.char.mod('%.4f', vm_kvb), ' kV'), coords=coords_b, zorder=3, color="blue")
                 draw_list.append(bic_b)
             if not len(vm_kvr_est)==0: 
                 bic_r_est = pp.plotting.create_annotation_collection(size=0.13, texts=np.char.add(np.char.mod('%.4f', vm_kvr_est), ' kV'), coords=coords_r_e, zorder=3, color=(1, 0, 0, 1))
                 draw_list.append(bic_r_est)
             if not len(vm_kvb_est)==0: 
-                bic_b_est = pp.plotting.create_annotation_collection(size=0.13, texts=np.char.add(np.char.mod('%.4f', vm_kvb_est), ' kV'), coords=coords_b_e, zorder=3, color=(0, 0, 0, 0.5))
+                bic_b_est = pp.plotting.create_annotation_collection(size=0.13, texts=np.char.add(np.char.mod('%.4f', vm_kvb_est), ' kV'), coords=coords_b_e, zorder=3, color="limegreen")
                 draw_list.append(bic_b_est)
 
             plt.cla()
