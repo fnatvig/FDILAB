@@ -4,10 +4,12 @@ from multiprocessing import *
 import pandapower as pp
 import pandapower.networks as nw
 import pandapower.estimation as est
+import pandapower.plotting as plot
 import numpy as np
 import queue
 import matplotlib.animation as animation
 import struct
+import os
 from copy import copy
 
 from constants import *
@@ -21,7 +23,8 @@ class PowerEngine:
         self.socket.bind((UDP_IP, POWER_PORT))
 
         set_start_method("spawn", force=True)
-
+        self.time_iteration = 0
+        self.df = None
         self.net = None
         self.toggle_plot = False
         self.update_animation  = True
@@ -60,8 +63,22 @@ class PowerEngine:
                 sim_process.kill()
 
             elif msg == SAVE_SIM:
+                size = self.data_queue.qsize()
+                self.df = pd.DataFrame(columns=["time iteration", "bus", "voltage (p.u.)", "label"])
+                for i in range(size):
+                    self.df.loc[len(self.df)] = self.data_queue.get()
                 sim_process.kill()
 
+            elif msg == EXPORT_CSV:
+                if not os.path.exists("data_exports"):
+                    os.mkdir("data_exports")
+                self.df.to_csv("data_exports/data_export.csv")
+
+            elif msg == EXPORT_EXCEL:
+                if not os.path.exists("data_exports"):
+                    os.mkdir("data_exports")
+                self.df.to_excel("data_exports/data_export.xlsx")
+            
             unpacked = struct.unpack("i 12x", msg)
             if unpacked[0] == MULTI_BUS_ATTACK:
                 bus, me_type, intensity = struct.unpack('i i s f', msg)[1:]
@@ -95,21 +112,21 @@ class PowerEngine:
                     self.attack_queue.put(attack)
 
 
-            elif unpacked[0] == SINGLE_BUS_ATTACK:
-                bus, me_type, intensity = struct.unpack('i i s f', msg)[1:]
-                m_type = None
-                if me_type == b'v':
-                    m_type = "vm_pu"
-                elif me_type == b'p':
-                    m_type = "p_mw"
-                else:
-                    m_type = "q_mvar"
+            # elif unpacked[0] == SINGLE_BUS_ATTACK:
+            #     bus, me_type, intensity = struct.unpack('i i s f', msg)[1:]
+            #     m_type = None
+            #     if me_type == b'v':
+            #         m_type = "vm_pu"
+            #     elif me_type == b'p':
+            #         m_type = "p_mw"
+            #     else:
+            #         m_type = "q_mvar"
                 
-                attack = FDIA(True, "bus", bus, m_type, 0, intensity)
+            #     attack = FDIA(True, "bus", bus, m_type, 0, intensity)
 
                 # The FDIA instance is added to the queue attackQueue to be able to access it 
                 # from all processes   
-                self.attack_queue.put(attack)
+                # self.attack_queue.put(attack)
 
     def sim(self):
         i = 0
@@ -122,7 +139,7 @@ class PowerEngine:
                 pass
 
             if is_running:
-
+                
                 base_values = self.net.bus.iloc[:]['vn_kv'].tolist()
 
                 pp.runpp(self.net, run_control=True, calculate_voltage_angles=True, init='dc')
@@ -136,7 +153,7 @@ class PowerEngine:
                 loadc = pp.plotting.create_load_collection(self.net, color="black", zorder=1, size=0.1) 
                 genc = pp.plotting.create_gen_collection(self.net, size=0.1, color="black", zorder=1, orientation=3.14159*2) 
 
-                n_ts =  500
+                n_ts =  100
                 volatility=0.01
                 lsfp = self.create_load_profile(n_ts, volatility)
                 lsfq = self.create_load_profile(n_ts, volatility)
@@ -144,7 +161,7 @@ class PowerEngine:
                 fig, ax = plt.subplots(figsize=(6, 6))
                 plt.subplots_adjust(left=0.0, bottom=0.0, top=1.0, right=1.0)
                 pp.plotting.draw_collections([lc, bc, tc, eg], ax=ax)
-                ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, lc, bc, tc, eg, loadc, genc, lsfp, lsfq, base_values), interval=50, cache_frame_data=False) 
+                ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, lc, bc, tc, eg, loadc, genc, lsfp, lsfq, base_values), frames =n_ts, interval=10, cache_frame_data=False) 
                 plt.show()
     
     def get_measurements(self):
@@ -161,6 +178,8 @@ class PowerEngine:
             self.last_attack = FDIA(atr1, atr2, atr3, atr4, atr5, atr6)
             self.last_attack.fill_attack_vector(self.net)
 
+
+
         # if an attack wasn't initiated
         except queue.Empty:
             pass
@@ -169,6 +188,10 @@ class PowerEngine:
         if self.last_attack.active:
             self.last_attack.fill_attack_vector(self.net)
             bus_data, line_data, trafo_data = self.last_attack.execute_attack(bus_data, line_data, trafo_data)
+
+        if not (self.last_attack.attack_vector == None):
+            if (len(set(self.last_attack.attack_vector)) == 1) and (list(set(self.last_attack.attack_vector))[0] == 1.0):
+                self.last_attack.active = False
 
         # Gathers the measurements (with added gaussian noise)
         for i in range(len(self.net.bus.index)):
@@ -245,7 +268,18 @@ class PowerEngine:
             
             pp.runpp(self.net, run_control=True, max_iteration=50, calculate_voltage_angles=True, init="results")
             self.get_measurements()
-
+            # print(self.net.measurement)
+            for j in range(len(self.net.measurement.index)):
+                element_type = copy(self.net.measurement.iloc[j]["element_type"])
+                measurement_type = copy(self.net.measurement.iloc[j]["measurement_type"])
+                element = copy(self.net.measurement.iloc[j]["element"])
+                value = copy(self.net.measurement.iloc[j]["value"])
+                if element_type == "bus":
+                    if measurement_type =="v":
+                        if self.last_attack.active:
+                            self.data_queue.put([self.time_iteration, element, value, "attack"])
+                        else:
+                            self.data_queue.put([self.time_iteration, element, value, "no attack"])
 
             est.estimate(self.net, calculate_voltage_angles=True, init="results")
 
@@ -261,17 +295,17 @@ class PowerEngine:
 
             
 
-            if self.toggle_plot:
-                plot_data = struct.pack("f f", vm_pu[0], vm_pu_est[0])
-                self.socket.sendto(plot_data, (UDP_IP, PLOT_PORT))
+            # if self.toggle_plot:
+            #     plot_data = struct.pack("f f", vm_pu[0], vm_pu_est[0])
+            #     self.socket.sendto(plot_data, (UDP_IP, PLOT_PORT))
 
-            try:
-                self.data_queue.get(False)
-                plot_data = struct.pack("f f", vm_pu[0], vm_pu_est[0])
-                self.socket.sendto(plot_data, (UDP_IP, PLOT_PORT))
-                self.toggle_plot = True
-            except queue.Empty:
-                pass
+            # try:
+            #     self.data_queue.get(False)
+            #     plot_data = struct.pack("f f", vm_pu[0], vm_pu_est[0])
+            #     self.socket.sendto(plot_data, (UDP_IP, PLOT_PORT))
+            #     self.toggle_plot = True
+            # except queue.Empty:
+            #     pass
             
 
             vm_kvr, vm_kvb, busesr, busesb = self.alarm(buses, vm_pu, vm_kv, max, min)
@@ -298,6 +332,7 @@ class PowerEngine:
                 bic_b_est = pp.plotting.create_annotation_collection(size=0.13, texts=np.char.add(np.char.mod('%.4f', vm_kvb_est), ' kV'), coords=coords_b_e, zorder=3, color="limegreen")
                 draw_list.append(bic_b_est)
 
+            self.time_iteration +=1 
             plt.cla()
             pp.plotting.draw_collections(draw_list, ax=ax)
 

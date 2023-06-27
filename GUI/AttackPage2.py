@@ -10,6 +10,7 @@ class AttackPage2(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.controller.winfo_toplevel().title("FDIA")
 
         label = tk.Label(self, text="Bus: ")
         label.grid(row=0, column=0, pady=10)

@@ -9,6 +9,8 @@ from GUI.ExportPage1 import *
 class ExportWindow(tk.Tk):
     def __init__(self, bus_list):
         tk.Tk.__init__(self)
+        self.title("Export Panel")
+        self.geometry("300x50")
         ws = self.winfo_screenwidth() # width of the screen
         hs = self.winfo_screenheight()
         self.geometry(f"+{int(3*ws/4)}+{int(hs/9)}")

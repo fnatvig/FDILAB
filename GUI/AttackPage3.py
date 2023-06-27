@@ -26,8 +26,8 @@ class AttackPage3(tk.Frame):
             self.labels.append(tk.Label(self, text=f"{i}"))
             self.labels[i].grid(row=i+1, column=0, columnspan=2, padx=5)
             self.drops.append(ttk.Combobox(self, state="readonly", 
-                                           values=["Voltage", "Active Power",
-                                                   "Reactive Power"]))
+                                           values=["Voltage", "P Consumption",
+                                                   "Q Consumption"]))
             self.drops[i].set("Voltage")
             self.drops[i].grid(row=i+1, column=2)
             self.sliders.append(tk.Scale(self, from_=0.0, to=2.0, 
@@ -52,9 +52,9 @@ class AttackPage3(tk.Frame):
             m_type = None
             if self.drops[i].get() == "Voltage":
                 m_type = b'v'
-            elif self.drops[i].get() == "Active Power":
+            elif self.drops[i].get() == "P Consumption":
                 m_type = b'p'
-            elif self.drops[i].get() == "Reactive Power":
+            elif self.drops[i].get() == "Q Consumption":
                 m_type = b'q'
             if i < len(self.controller.bus_list)-1:
                 self.controller.socket.sendto(

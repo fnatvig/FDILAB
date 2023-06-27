@@ -1,9 +1,9 @@
 import tkinter as tk
+import time
 from socket import *
 from multiprocessing import *
 
 from constants import *
-from GUI.CtrlPage3 import *
 from GUI.AttackWindow import *
 from GUI.ExportWindow import *
 
@@ -14,8 +14,8 @@ class CtrlPage2(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
         self.startup = True
-        label = tk.Label(self, text="Page Two")
-        label.pack(side=tk.TOP)
+        # label = tk.Label(self, text="Page Two")
+        # label.pack(side=tk.TOP)
 
         self.button1 = tk.Button(self, text="Start", command=lambda: self.start_sim())
         self.button1.pack(side=tk.LEFT, padx=10)
@@ -30,6 +30,7 @@ class CtrlPage2(tk.Frame):
 
     def start_sim(self):
         self.controller.socket.sendto(START_SIM, (UDP_IP, POWER_PORT))
+        # time.sleep(2)
         self.button1["state"] = "disabled"
         self.button2["state"] = "active"
 
@@ -37,7 +38,8 @@ class CtrlPage2(tk.Frame):
             self.startup = False
             self.button3["state"] = "active"
             bus_list = [str(list(range(int(self.controller.number_of_buses)))[i]) for i in list(range(int(self.controller.number_of_buses)))]
-            win = AttackWindow(bus_list)
+            self.controller.attack_win = AttackWindow(bus_list)
+
 
     def pause_sim(self):
         self.controller.socket.sendto(PAUSE_SIM, (UDP_IP, POWER_PORT))
@@ -49,7 +51,7 @@ class CtrlPage2(tk.Frame):
     def export_data(self):
         self.controller.socket.sendto(SAVE_SIM, (UDP_IP, POWER_PORT))
         bus_list = [str(list(range(int(self.controller.number_of_buses)))[i]) for i in list(range(int(self.controller.number_of_buses)))]
-        win = ExportWindow(bus_list)
+        self.controller.export_win = ExportWindow(bus_list)
 
         # if (msg == SAVE_SIM) and (self.button1["state"] == "disabled"):
             

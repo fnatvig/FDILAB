@@ -12,6 +12,7 @@ class AttackWindow(tk.Tk):
         tk.Tk.__init__(self)
         ws = self.winfo_screenwidth() # width of the screen
         hs = self.winfo_screenheight()
+        self.title("Attack Panel")
         self.geometry(f"+{int(ws/2)}+{int(hs/9)}")
         self.container = tk.Frame(self)
         self.container.pack()
@@ -46,3 +47,5 @@ class AttackWindow(tk.Tk):
         frame.grid(row=0, column=0, sticky="nsew")
 
         self.show_page(AttackPage3)
+
+
