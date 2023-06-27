@@ -1,5 +1,5 @@
 # FDIASIM
-A False Data Injection Attack (FDIA) Simulator
+A False Data Injection Attack (FDIA) Simulator (development branch)
 
 # Prerequisites
 The application is only tested with python version Python 3.10.10, although I believe one should be able to run the application with slightly older python versions as well. However, older versions than 3.10 won't work (as the code contains "match case" statements). Other than that, you also need to install "pandapower" (https://pandapower.readthedocs.io/en/v2.10.1/about.html).
