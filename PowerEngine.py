@@ -14,6 +14,7 @@ from copy import copy
 
 from constants import *
 from FDIA import *
+from Preprocessor import *
 
 class PowerEngine:
     def __init__(self):
@@ -64,9 +65,12 @@ class PowerEngine:
 
             elif msg == SAVE_SIM:
                 size = self.data_queue.qsize()
-                self.df = pd.DataFrame(columns=["time iteration", "bus", "voltage (p.u.)", "label"])
+                self.df = pd.DataFrame(columns=["time", "bus", "V", "P", "Q", "label"])
                 for i in range(size):
                     self.df.loc[len(self.df)] = self.data_queue.get()
+                preprocessor = Preprocessor(self.df)
+                preprocessor.sort()
+                self.df = preprocessor.df
                 sim_process.kill()
 
             elif msg == EXPORT_CSV:
@@ -105,7 +109,7 @@ class PowerEngine:
                 buses.append(bus)
                 m_types.append(m_type)
                 intensities.append(intensity)
-                print(intensities)
+                # print(intensities)
                 if len(buses) == len(self.net.bus.index):
                     attack = FDIA(True, "bus", buses, m_types, 1, intensities)
                     buses, m_types, intensities = [], [], []
@@ -277,9 +281,19 @@ class PowerEngine:
                 if element_type == "bus":
                     if measurement_type =="v":
                         if self.last_attack.active:
-                            self.data_queue.put([self.time_iteration, element, value, "attack"])
+                            self.data_queue.put([self.time_iteration, element, value, None, None, "attack"])
                         else:
-                            self.data_queue.put([self.time_iteration, element, value, "no attack"])
+                            self.data_queue.put([self.time_iteration, element, value, None, None, "no_attack"])
+                    if measurement_type =="p":
+                        if self.last_attack.active:
+                                self.data_queue.put([self.time_iteration, element, None, value, None, "attack"])
+                        else:
+                            self.data_queue.put([self.time_iteration, element, None, value, None, "no_attack"])
+                    if measurement_type =="q":
+                        if self.last_attack.active:
+                                self.data_queue.put([self.time_iteration, element, None,  None, value, "attack"])
+                        else:
+                            self.data_queue.put([self.time_iteration, element, None, None, value, "no_attack"])
 
             est.estimate(self.net, calculate_voltage_angles=True, init="results")
 
