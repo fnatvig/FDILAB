@@ -22,6 +22,10 @@ class CtrlPage1(tk.Frame):
         if msg == LOAD14:
             self.controller.number_of_buses = 14
             self.controller.show_page(CtrlPage2)
+            # self.controller.menubar.entryconfig("Simulation", state="active")
+
         elif msg == LOAD9:
             self.controller.number_of_buses = 9
             self.controller.show_page(CtrlPage2)
+            # self.controller.menubar.entryconfig("Simulation", state="active")
+

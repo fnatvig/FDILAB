@@ -32,24 +32,14 @@ class FDIA:
     def execute_attack(self, bus_data, line_data, trafo_data):
         match self.e_type:
             case "bus":
-                if type(self.m_type) == str:
-                    match self.m_type:
+                for i in range(len(self.m_type)):
+                    match self.m_type[i]:
                         case "vm_pu":
-                            bus_data.loc["vm_pu"][:]*=self.attack_vector
+                            bus_data.loc["vm_pu"][i]*=self.attack_vector[i]
                         case "p_mw":
-                            bus_data.loc["p_mw"][:]*=self.attack_vector
+                            bus_data.loc["p_mw"][i]*=self.attack_vector[i]
                         case "q_mvar":
-                            bus_data.loc["q_mvar"][:]*=self.attack_vector
-                elif type(self.m_type) == list:
-                    for i in range(len(self.m_type)):
-                        match self.m_type[i]:
-                            case "vm_pu":
-                                bus_data.loc["vm_pu"][i]*=self.attack_vector[i]
-                            case "p_mw":
-                                bus_data.loc["p_mw"][i]*=self.attack_vector[i]
-                            case "q_mvar":
-                                bus_data.loc["q_mvar"][i]*=self.attack_vector[i]
-
+                            bus_data.loc["q_mvar"][i]*=self.attack_vector[i]
         return bus_data, line_data, trafo_data
     
     def get_attributes(self):

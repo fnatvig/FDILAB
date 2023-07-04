@@ -31,7 +31,7 @@ class PowerEngine:
         self.update_animation  = True
         self.last_attack = FDIA(active=False)
         self.sim_queue, self.attack_queue, self.data_queue = Queue(), Queue(), Queue()
-        
+
         # Confirms that the PowerEngine object is initialized
         self.socket.sendto(POWERENGINE_READY, (UDP_IP, GUI_PORT))
             
@@ -62,8 +62,14 @@ class PowerEngine:
 
             elif msg == KILL_SIM:
                 sim_process.kill()
+            
+            elif msg == RESET_SIM:
+                sim_process.kill()
+                self.reset()
+                self.main()
 
             elif msg == SAVE_SIM:
+                self.sim_queue.put(False)    
                 size = self.data_queue.qsize()
                 self.df = pd.DataFrame(columns=["time", "bus", "V", "P", "Q", "label"])
                 for i in range(size):
@@ -96,7 +102,7 @@ class PowerEngine:
                 buses.append(bus)
                 m_types.append(m_type)
                 intensities.append(intensity)
-                # print(intensities)
+
             elif unpacked[0] == LAST_ATTACK_MSG:
                 bus, me_type, intensity = struct.unpack('i i s f', msg)[1:]
                 m_type = None
@@ -109,29 +115,22 @@ class PowerEngine:
                 buses.append(bus)
                 m_types.append(m_type)
                 intensities.append(intensity)
-                # print(intensities)
                 if len(buses) == len(self.net.bus.index):
                     attack = FDIA(True, "bus", buses, m_types, 1, intensities)
                     buses, m_types, intensities = [], [], []
                     self.attack_queue.put(attack)
+    def reset(self):
+        self.time_iteration = 0
+        self.df = None
+        self.net = None
+        self.toggle_plot = False
+        self.update_animation  = True
+        self.last_attack = FDIA(active=False)
 
-
-            # elif unpacked[0] == SINGLE_BUS_ATTACK:
-            #     bus, me_type, intensity = struct.unpack('i i s f', msg)[1:]
-            #     m_type = None
-            #     if me_type == b'v':
-            #         m_type = "vm_pu"
-            #     elif me_type == b'p':
-            #         m_type = "p_mw"
-            #     else:
-            #         m_type = "q_mvar"
-                
-            #     attack = FDIA(True, "bus", bus, m_type, 0, intensity)
-
-                # The FDIA instance is added to the queue attackQueue to be able to access it 
-                # from all processes   
-                # self.attack_queue.put(attack)
-
+        self.sim_queue, self.attack_queue, self.data_queue = Queue(), Queue(), Queue()
+        
+        # Confirms that the PowerEngine object is initialized
+        self.socket.sendto(POWERENGINE_READY, (UDP_IP, GUI_PORT))
     def sim(self):
         i = 0
         is_running = True
@@ -165,7 +164,7 @@ class PowerEngine:
                 fig, ax = plt.subplots(figsize=(6, 6))
                 plt.subplots_adjust(left=0.0, bottom=0.0, top=1.0, right=1.0)
                 pp.plotting.draw_collections([lc, bc, tc, eg], ax=ax)
-                ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, lc, bc, tc, eg, loadc, genc, lsfp, lsfq, base_values), frames =n_ts, interval=10, cache_frame_data=False) 
+                ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, lc, bc, tc, eg, loadc, genc, lsfp, lsfq, base_values), frames =n_ts, interval=50, cache_frame_data=False) 
                 plt.show()
     
     def get_measurements(self):
@@ -286,12 +285,12 @@ class PowerEngine:
                             self.data_queue.put([self.time_iteration, element, value, None, None, "no_attack"])
                     if measurement_type =="p":
                         if self.last_attack.active:
-                                self.data_queue.put([self.time_iteration, element, None, value, None, "attack"])
+                            self.data_queue.put([self.time_iteration, element, None, value, None, "attack"])
                         else:
                             self.data_queue.put([self.time_iteration, element, None, value, None, "no_attack"])
                     if measurement_type =="q":
                         if self.last_attack.active:
-                                self.data_queue.put([self.time_iteration, element, None,  None, value, "attack"])
+                            self.data_queue.put([self.time_iteration, element, None, None, value, "attack"])
                         else:
                             self.data_queue.put([self.time_iteration, element, None, None, value, "no_attack"])
 

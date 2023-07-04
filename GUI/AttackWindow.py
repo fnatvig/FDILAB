@@ -2,9 +2,9 @@ import tkinter as tk
 from socket import *
 
 
-from GUI.AttackPage1 import *
-from GUI.AttackPage2 import *
-from GUI.AttackPage3 import *
+# from GUI.AttackPage1 import *
+# from GUI.AttackPage2 import *
+from GUI.AttackPage import *
 
 
 class AttackWindow(tk.Tk):
@@ -19,15 +19,10 @@ class AttackWindow(tk.Tk):
         self.bus_list = bus_list
         self.socket = socket(AF_INET, SOCK_DGRAM)
         self.frames = {}
-        # for F in (AttackPage3):
-        #     frame = F(self.container, self)
-        #     self.frames[F] = frame
-        #     frame.grid(row=0, column=0, sticky="nsew")
-
-        frame = AttackPage3(self.container, self)
-        self.frames[AttackPage3] = frame
+        frame = AttackPage(self.container, self)
+        self.frames[AttackPage] = frame
         frame.grid(row=0, column=0, sticky="nsew")
-        self.show_page(AttackPage3)
+        self.show_page(AttackPage)
         
 
     def show_page(self, cont):
@@ -38,14 +33,10 @@ class AttackWindow(tk.Tk):
         for frame in self.frames.values():
             frame.destroy()
         self.frames = {}
-        # for F in (AttackPage1, AttackPage2, AttackPage3):
-            # frame = F(self.container, self)
-            # self.frames[F] = frame
-            # frame.grid(row=0, column=0, sticky="nsew")
-        frame = AttackPage3(self.container, self)
-        self.frames[AttackPage3] = frame
+        frame = AttackPage(self.container, self)
+        self.frames[AttackPage] = frame
         frame.grid(row=0, column=0, sticky="nsew")
 
-        self.show_page(AttackPage3)
+        self.show_page(AttackPage)
 
 

@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import ttk
 import struct
 
-from GUI.AttackPage1 import *
 from constants import *
 
 
@@ -10,8 +9,7 @@ class ExportPage1(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        # header = tk.Label(self, text="Export DATA")
-        # header.grid(row=0, column = 0, columnspan=6)
+
         self.button1 = tk.Button(self, text="Export to excel", command=lambda: self.export_excel())
         self.button1.grid(row=1, column=0, columnspan=3, sticky='n'+'s'+'w'+'e', padx=5)
 
