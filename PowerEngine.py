@@ -15,7 +15,7 @@ from copy import copy
 from constants import *
 from FDIA import *
 from Preprocessor import *
-from scripts.test1 import *
+from scripts.kNN_9bus import *
 
 class PowerEngine:
     def __init__(self):

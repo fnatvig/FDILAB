@@ -4,17 +4,21 @@ from copy import copy
 
 class Preprocessor:
     def __init__(self, df):
-        self.raw_df = df
-        self.bus_cardinality = len(set(df.iloc[:]["bus"]))
-        bus_list = [f"bus_{i}" for i in range(self.bus_cardinality)]
-        columns = ["time"]
-        for bus in bus_list:
-            columns.append("V_" + bus)
-            columns.append("P_" + bus)
-            columns.append("Q_" + bus)
-        columns.append("label")
+        if len(df) > 0:
+            self.raw_df = df
+            self.bus_cardinality = len(set(df.iloc[:]["bus"]))
+            bus_list = [f"bus_{i}" for i in range(self.bus_cardinality)]
+            columns = ["time"]
+            for bus in bus_list:
+                columns.append("V_" + bus)
+                columns.append("P_" + bus)
+                columns.append("Q_" + bus)
+            columns.append("label")
 
-        self.df = pd.DataFrame(columns=columns)
+            self.df = pd.DataFrame(columns=columns)
+        else:
+            pass
+
 
     def sort(self):
         t, m = 0, 0
@@ -44,6 +48,15 @@ class Preprocessor:
             self.df.loc[len(self.df)] = row
             t+=1
 
+    def disassemble(self, data):
+        arr = []
+        for i in range(len(data)):
+            subarr = []
+            for j in range(1, len(data.columns)-1):
+                subarr.append(data.iloc[i][data.columns[j]])
+            arr.append(subarr)
+
+        return arr
 
 
 
