@@ -6,7 +6,6 @@ from GUI.CtrlPage1 import *
 from GUI.CtrlPage2 import *
 from GUI.CtrlWindow import *
 
-stop = False 
 # This is the main function of the whole application
 if __name__ == "__main__": 
      
@@ -18,7 +17,8 @@ if __name__ == "__main__":
                     Process(target=plotServer.main)] 
                p[0].start(), p[1].start()
                ctrl.wait_for_confirmation()
-               ctrl.protocol("WM_DELETE_WINDOW", lambda: ctrl.on_closing(p))
+               ctrl.p = p
+               ctrl.protocol("WM_DELETE_WINDOW", lambda: ctrl.on_closing())
                ctrl.mainloop()
           except tk.TclError:
                pass

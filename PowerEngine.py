@@ -15,6 +15,7 @@ from copy import copy
 from constants import *
 from FDIA import *
 from Preprocessor import *
+from scripts.test1 import *
 
 class PowerEngine:
     def __init__(self):
@@ -28,9 +29,11 @@ class PowerEngine:
         self.df = None
         self.net = None
         self.toggle_plot = False
+        self.toggle_defense = False
         self.update_animation  = True
         self.last_attack = FDIA(active=False)
-        self.sim_queue, self.attack_queue, self.data_queue = Queue(), Queue(), Queue()
+        self.sim_queue, self.data_queue = Queue(), Queue()
+        self.attack_queue, self.defense_queue = Queue(), Queue()
 
         # Confirms that the PowerEngine object is initialized
         self.socket.sendto(POWERENGINE_READY, (UDP_IP, GUI_PORT))
@@ -64,9 +67,16 @@ class PowerEngine:
                 sim_process.kill()
             
             elif msg == RESET_SIM:
-                sim_process.kill()
+                if sim_started:
+                    sim_process.kill()
                 self.reset()
                 self.main()
+            
+            elif msg == ACTIVATE_DEFENSE:
+                self.defense_queue.put(True)
+            
+            elif msg == DEACTIVATE_DEFENSE:
+                self.defense_queue.put(False)
 
             elif msg == SAVE_SIM:
                 self.sim_queue.put(False)    
@@ -127,7 +137,8 @@ class PowerEngine:
         self.update_animation  = True
         self.last_attack = FDIA(active=False)
 
-        self.sim_queue, self.attack_queue, self.data_queue = Queue(), Queue(), Queue()
+        self.sim_queue, self.data_queue = Queue(), Queue()
+        self.attack_queue, self.defense_queue = Queue(), Queue()
         
         # Confirms that the PowerEngine object is initialized
         self.socket.sendto(POWERENGINE_READY, (UDP_IP, GUI_PORT))
@@ -272,6 +283,14 @@ class PowerEngine:
             pp.runpp(self.net, run_control=True, max_iteration=50, calculate_voltage_angles=True, init="results")
             self.get_measurements()
             # print(self.net.measurement)
+            try:
+                self.toggle_defense = self.defense_queue.get(False)
+            except queue.Empty:
+                pass
+            
+            raw_measurements = []
+            
+            
             for j in range(len(self.net.measurement.index)):
                 element_type = copy(self.net.measurement.iloc[j]["element_type"])
                 measurement_type = copy(self.net.measurement.iloc[j]["measurement_type"])
@@ -280,19 +299,33 @@ class PowerEngine:
                 if element_type == "bus":
                     if measurement_type =="v":
                         if self.last_attack.active:
-                            self.data_queue.put([self.time_iteration, element, value, None, None, "attack"])
+                            raw_measurements.append(value)
+                            record = [self.time_iteration, element, value, None, None, "attack"]
+                            self.data_queue.put(record)
                         else:
-                            self.data_queue.put([self.time_iteration, element, value, None, None, "no_attack"])
+                            raw_measurements.append(value)
+                            record = [self.time_iteration, element, value, None, None, "no_attack"]
+                            self.data_queue.put(record)
                     if measurement_type =="p":
                         if self.last_attack.active:
-                            self.data_queue.put([self.time_iteration, element, None, value, None, "attack"])
+                            raw_measurements.append(value)
+                            record = [self.time_iteration, element, None, value, None, "attack"]
+                            self.data_queue.put(record)
                         else:
-                            self.data_queue.put([self.time_iteration, element, None, value, None, "no_attack"])
+                            raw_measurements.append(value)
+                            record = [self.time_iteration, element, None, value, None, "no_attack"]
+                            self.data_queue.put(record)
                     if measurement_type =="q":
                         if self.last_attack.active:
-                            self.data_queue.put([self.time_iteration, element, None, None, value, "attack"])
+                            raw_measurements.append(value)
+                            record = [self.time_iteration, element, None, None, value, "attack"]
+                            self.data_queue.put(record)
                         else:
-                            self.data_queue.put([self.time_iteration, element, None, None, value, "no_attack"])
+                            raw_measurements.append(value)
+                            record = [self.time_iteration, element, None, None, value, "no_attack"]
+                            self.data_queue.put(record)
+
+            filter(self.toggle_defense, raw_measurements)
 
             est.estimate(self.net, calculate_voltage_angles=True, init="results")
 

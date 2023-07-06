@@ -2,8 +2,6 @@ import tkinter as tk
 from socket import *
 
 
-# from GUI.AttackPage1 import *
-# from GUI.AttackPage2 import *
 from GUI.AttackPage import *
 
 

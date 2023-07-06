@@ -1,5 +1,6 @@
 import tkinter as tk
 from socket import *
+import sys
 
 from constants import *
 from GUI.CtrlPage1 import *
@@ -12,7 +13,9 @@ class CtrlWindow(tk.Tk):
         self.startup = True
         self.container = tk.Frame(self)
         self.title("Control Panel")
-        self.geometry("300x100")
+        self.width = 300 
+        self.height = 100
+        self.geometry(f"{self.width}x{self.height}")
         ws = self.winfo_screenwidth() # width of the screen
         hs = self.winfo_screenheight()
         self.geometry(f"+{int(2*ws/5)}+{int(hs/9)}")
@@ -20,23 +23,41 @@ class CtrlWindow(tk.Tk):
         self.socket = socket(AF_INET, SOCK_DGRAM)
         self.socket.bind(("127.0.0.1", GUI_PORT))
         self.attack_win =None
-        self.export_win =None
+        self.defense_win =None
         self.running = True
         self.frames = {}
         self.menubar = tk.Menu(self)
         self.config(menu=self.menubar)
+        self.p = None
         self.sim_menu = tk.Menu(self.menubar, tearoff=False)
+        self.export_menu = tk.Menu(self.sim_menu, tearoff=False)
+        self.export_menu.add_command(
+        label='as .xlsx',
+        state="disabled",
+        command=lambda: self.export_sim(EXPORT_EXCEL)
+            )
+        self.export_menu.add_command(
+        label='as .csv',
+        state="disabled",
+        command=lambda: self.export_sim(EXPORT_CSV)
+            )
+        self.sim_menu.add_cascade(
+        label='Export Simulation',
+        state="disabled",
+        menu = self.export_menu
+            )
+        self.sim_menu.add_separator()
         self.sim_menu.add_command(
         label='Stop Simulation',
+        state="disabled",
         command=lambda: self.reset_sim()
             )
         self.sim_menu.add_command(
         label='Exit',
-        command=lambda: self.on_closing(procs=None, )
-        )
+        command=lambda: self.on_closing()
+            )
         self.menubar.add_cascade(
             label="Simulation",
-            state="disabled",
             menu=self.sim_menu
         )
         self.action_menu = tk.Menu(self.menubar, tearoff=False)
@@ -45,7 +66,7 @@ class CtrlWindow(tk.Tk):
         command=lambda: self.open_attack_panel())
         self.action_menu.add_command(
         label='Open Defense Panel',
-        command=self.destroy)
+        command=lambda: self.open_defense_panel())
 
         self.menubar.add_cascade(
             label="Action",
@@ -57,9 +78,18 @@ class CtrlWindow(tk.Tk):
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
 
+    def export_sim(self, msg):
+        self.socket.sendto(SAVE_SIM, (UDP_IP, POWER_PORT))
+        time.sleep(0.1)
+        self.socket.sendto(msg, (UDP_IP, POWER_PORT))
+
+
     def open_attack_panel(self):
         bus_list = [str(list(range(int(self.number_of_buses)))[i]) for i in list(range(int(self.number_of_buses)))]
         self.attack_win = AttackWindow(bus_list)
+
+    def open_defense_panel(self):
+        self.defense_win = DefenseWindow()
 
     def show_page(self, cont):
         frame = self.frames[cont]
@@ -78,11 +108,11 @@ class CtrlWindow(tk.Tk):
                 counter += 1
         self.show_page(CtrlPage1)
 
-    def on_closing(self, procs):
-        if not (procs == None):
-            for p in procs:
+    def on_closing(self):
+        self.socket.sendto(KILL_SIM, (UDP_IP, POWER_PORT))
+        if not (self.p == None):
+            for p in self.p:
                 if p.is_alive():
-                    self.socket.sendto(KILL_SIM, (UDP_IP, POWER_PORT))
                     p.kill()
         
         if not (self.attack_win ==None):
@@ -91,16 +121,21 @@ class CtrlWindow(tk.Tk):
             except tk.TclError:
                 pass
 
-        if not (self.export_win ==None):
+        if not (self.defense_win ==None):
             try:
-                self.export_win.destroy()
+                self.defense_win.destroy()
             except tk.TclError:
                 pass
         self.running = False
         self.destroy()
 
     def reset_sim(self):
+        self.sim_menu.entryconfig("Stop Simulation", state="disabled")
+        self.sim_menu.entryconfig("Export Simulation", state="disabled")
+        self.menubar.entryconfig("Action", state="disabled")
+
         self.socket.sendto(RESET_SIM, (UDP_IP, POWER_PORT))
+
         for frame in self.frames.values():
             frame.destroy()
         self.frames = {}
@@ -110,9 +145,9 @@ class CtrlWindow(tk.Tk):
                 self.attack_win.destroy()
             except tk.TclError:
                 pass
-        if not (self.export_win ==None):
+        if not (self.defense_win ==None):
             try:
-                self.export_win.destroy()
+                self.defense_win.destroy()
             except tk.TclError:
                 pass
         for F in (CtrlPage1, CtrlPage2):

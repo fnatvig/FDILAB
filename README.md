@@ -1,4 +1,4 @@
-# FDIASIM
+# FDIASIM (alternatively "GridSecurityLab" or "PowerSecurityLab")
 A False Data Injection Attack (FDIA) Simulator (development branch)
 
 # Prerequisites
@@ -24,3 +24,5 @@ The figure below may clarify how the different modules are connected. The blue b
 ![architecture](https://user-images.githubusercontent.com/103872952/229731005-504d11e1-bfb9-4ce2-a358-cf32d610a2c6.png)
 
 ---TBD--- 
+
+
