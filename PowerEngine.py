@@ -28,9 +28,10 @@ class PowerEngine:
         self.time_iteration = 0
         self.df = None
         self.net = None
-        self.toggle_plot = False
+        self.toggle_plot = True
         self.toggle_defense = False
         self.update_animation  = True
+        self.last_measurement = None
         self.last_attack = FDIA(active=False)
         self.sim_queue, self.data_queue = Queue(), Queue()
         self.attack_queue, self.defense_queue = Queue(), Queue()
@@ -299,35 +300,47 @@ class PowerEngine:
                 if element_type == "bus":
                     if measurement_type =="v":
                         if self.last_attack.active:
-                            raw_measurements.append(value)
                             record = [self.time_iteration, element, value, None, None, "attack"]
+                            raw_measurements.append(record)
                             self.data_queue.put(record)
                         else:
-                            raw_measurements.append(value)
                             record = [self.time_iteration, element, value, None, None, "no_attack"]
+                            raw_measurements.append(record)
                             self.data_queue.put(record)
                     if measurement_type =="p":
                         if self.last_attack.active:
-                            raw_measurements.append(value)
                             record = [self.time_iteration, element, None, value, None, "attack"]
+                            raw_measurements.append(record)
                             self.data_queue.put(record)
                         else:
-                            raw_measurements.append(value)
                             record = [self.time_iteration, element, None, value, None, "no_attack"]
+                            raw_measurements.append(record)
                             self.data_queue.put(record)
                     if measurement_type =="q":
                         if self.last_attack.active:
-                            raw_measurements.append(value)
                             record = [self.time_iteration, element, None, None, value, "attack"]
+                            raw_measurements.append(record)
                             self.data_queue.put(record)
                         else:
-                            raw_measurements.append(value)
                             record = [self.time_iteration, element, None, None, value, "no_attack"]
+                            raw_measurements.append(record)
                             self.data_queue.put(record)
 
-            filter(self.toggle_defense, raw_measurements)
+            df = pd.DataFrame(raw_measurements, columns=["time", "bus", "V", "P", "Q", "label"])
+            pre = Preprocessor(df)
+            pre.sort_instant()
+
+            verdict = filter(self.toggle_defense, pre.df)
+            
+            if verdict == "attack":
+                self.net.measurement = copy(self.last_measurement)
+            else:
+                self.last_measurement = copy(self.net.measurement)
 
             est.estimate(self.net, calculate_voltage_angles=True, init="results")
+
+            # print(self.evaluate())
+
 
 
             # list of all bus indices
@@ -341,11 +354,14 @@ class PowerEngine:
 
             
 
-            # if self.toggle_plot:
-            #     plot_data = struct.pack("f f", vm_pu[0], vm_pu_est[0])
-            #     self.socket.sendto(plot_data, (UDP_IP, PLOT_PORT))
+            if self.toggle_plot:
+
+                # plot_data = struct.pack("f", vm_pu[0], vm_pu_est[0])
+                plot_data = struct.pack("f", self.evaluate())
+                self.socket.sendto(plot_data, (UDP_IP, PLOT_PORT))
 
             # try:
+
             #     self.data_queue.get(False)
             #     plot_data = struct.pack("f f", vm_pu[0], vm_pu_est[0])
             #     self.socket.sendto(plot_data, (UDP_IP, PLOT_PORT))
@@ -382,7 +398,11 @@ class PowerEngine:
             plt.cla()
             pp.plotting.draw_collections(draw_list, ax=ax)
 
-
+    def evaluate(self):
+        sum = 0
+        for i in range(len(self.net.bus.index)):
+            sum += (self.net.res_bus.iloc[i]['vm_pu']-self.net.res_bus_est.iloc[i]['vm_pu'])*(self.net.res_bus.iloc[i]['vm_pu']-self.net.res_bus_est.iloc[i]['vm_pu'])
+        return sum/len(self.net.bus.index)
     # Used to highlight the estimates with a value outside of the acceptable limits 
     def alarm(self, buses, vm_pu, vm_kv, max_pu, min_pu):
 

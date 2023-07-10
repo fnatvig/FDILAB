@@ -3,7 +3,10 @@ from Preprocessor import *
 
 def filter(toggle, data):
     if toggle:
-        print(data)
+        if data.iloc[0]["label"] == "attack":
+            return "attack"
+        else: 
+            return "no attack"
 
 def train():
     raw_data = pd.read_excel("data_exports/data_export.xlsx")

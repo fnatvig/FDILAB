@@ -6,6 +6,7 @@ from constants import *
 from GUI.CtrlPage1 import *
 from GUI.CtrlPage2 import *
 from GUI.AttackWindow import *
+from GUI.EvaluationWindow import *
 
 class CtrlWindow(tk.Tk):
     def __init__(self):
@@ -24,6 +25,7 @@ class CtrlWindow(tk.Tk):
         self.socket.bind(("127.0.0.1", GUI_PORT))
         self.attack_win =None
         self.defense_win =None
+        self.eval_win = None
         self.running = True
         self.frames = {}
         self.menubar = tk.Menu(self)
@@ -62,6 +64,9 @@ class CtrlWindow(tk.Tk):
         )
         self.action_menu = tk.Menu(self.menubar, tearoff=False)
         self.action_menu.add_command(
+        label='Open Evaluation Window',
+        command=lambda: self.open_evaluation_window())
+        self.action_menu.add_command(
         label='Open Attack Panel',
         command=lambda: self.open_attack_panel())
         self.action_menu.add_command(
@@ -83,6 +88,8 @@ class CtrlWindow(tk.Tk):
         time.sleep(0.1)
         self.socket.sendto(msg, (UDP_IP, POWER_PORT))
 
+    def open_evaluation_window(self):
+        self.eval_win = EvaluationWindow()
 
     def open_attack_panel(self):
         bus_list = [str(list(range(int(self.number_of_buses)))[i]) for i in list(range(int(self.number_of_buses)))]

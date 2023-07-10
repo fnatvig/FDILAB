@@ -18,17 +18,40 @@ class Preprocessor:
             self.df = pd.DataFrame(columns=columns)
         else:
             pass
-
+    
+    def sort_instant(self):
+        m = 0
+        net_data = []
+        for i in range(self.bus_cardinality):
+            bus_data = []
+            for j in range(3):
+                measurement = list(copy(self.raw_df.iloc[m]["V":"Q"]))
+                if len(bus_data) == 0:
+                    bus_data = measurement
+                else:
+                    bus_data = [bus_data[j] if not 
+                                ((bus_data[j] == None) or 
+                                 (math.isnan(bus_data[j]))) 
+                                 else measurement[j] for j in range(3)]
+                m+=1
+            for j in range(3):
+                net_data.append(bus_data[j])
+        row = [self.raw_df.iloc[0]["time"]]
+        for k in range(len(net_data)):
+            row.append(net_data[k])
+        row.append(self.raw_df.iloc[m-1]["label"])
+        self.df.loc[len(self.df)] = row
 
     def sort(self):
         t, m = 0, 0
         t_end = self.raw_df.iloc[-1]["time"]
+        print("t_end = ", t_end)
         while t < t_end:
             net_data=[]
             for i in range(self.bus_cardinality):
                 bus_data = []
                 for j in range(3):
-
+                    print(m)
                     measurement = list(copy(self.raw_df.iloc[m]["V":"Q"]))
                     if len(bus_data) == 0:
                         bus_data = measurement

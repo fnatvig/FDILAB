@@ -10,8 +10,6 @@ from constants import *
 
 
 UDP_IP = "127.0.0.1"
-UDP_PORT = 5006
-GUI_PORT = 5010
 condition = True 
 x = [0]
 y1 = [0]
@@ -25,27 +23,23 @@ def animate(i, q):
     global flag
     try:
         data = q.get(False)
-        y1_new, y2_new = struct.unpack('f f', data)
-        if (y1_new==0.0) and (y2_new==0.0):
+        y1_new = struct.unpack('f', data)
+        if (y1_new==0.0):
                 plt.close()
         y1.append(y1_new)
-        y2.append(y2_new)
-        # print(y1)
         x.append(i)
-        if flag or (len(y1)>20):
+        if flag or (len(y1)>50):
             del y1[0]
-            del y2[0]
             del x[0]
             flag = False
 
     except queue.Empty:
         pass
     plt.clf()
-    plt.plot(x, y1, label='Voltage Magnitude, bus 0')
-    plt.plot(x, y2, label='Estimated Voltage Magnitude, bus 0')
-    plt.legend()
+    plt.plot(x, y1)
+    # plt.legend()
     plt.xlabel('Time', fontsize=10)
-    plt.ylabel('Voltage [p.u]', fontsize=10)
+    plt.ylabel('Mean Squared Error', fontsize=10)
     plt.tight_layout()
 
 def child_process(q):
@@ -55,7 +49,7 @@ def child_process(q):
 
 def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((UDP_IP, UDP_PORT))
+    sock.bind((UDP_IP, PLOT_PORT))
     i = 0
     plot_queue = Queue()
     plt.style.use('fivethirtyeight')
@@ -73,8 +67,8 @@ def main():
     while is_running:
         try:
             data = sock.recv(1024)
-            unpack = struct.unpack("f f", data)
-            if (unpack[0]==0.0) and (unpack[1]==0.0):
+            unpack = struct.unpack("f", data)
+            if (unpack==0.0):
                 is_running = False
                 sock.shutdown(socket.SHUT_RDWR)
                 sock.close()
