@@ -6,7 +6,7 @@ from constants import *
 from GUI.CtrlPage1 import *
 from GUI.CtrlPage2 import *
 from GUI.AttackWindow import *
-from GUI.EvaluationWindow import *
+# from GUI.PlotServer import *
 
 class CtrlWindow(tk.Tk):
     def __init__(self):
@@ -89,7 +89,7 @@ class CtrlWindow(tk.Tk):
         self.socket.sendto(msg, (UDP_IP, POWER_PORT))
 
     def open_evaluation_window(self):
-        self.eval_win = EvaluationWindow()
+        self.socket.sendto(ACTIVATE_PLOT, (UDP_IP, PLOT_PORT))
 
     def open_attack_panel(self):
         bus_list = [str(list(range(int(self.number_of_buses)))[i]) for i in list(range(int(self.number_of_buses)))]

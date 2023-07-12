@@ -28,7 +28,7 @@ class PowerEngine:
         self.time_iteration = 0
         self.df = None
         self.net = None
-        self.toggle_plot = True
+        self.toggle_plot = False
         self.toggle_defense = False
         self.update_animation  = True
         self.last_measurement = None
