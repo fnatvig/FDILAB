@@ -1,20 +1,12 @@
-import pandapower as pp
-import pandapower.networks as nw
-import pandas as pd
-from copy import copy
-
-net = nw.case14()
-pp.create_measurement(net, "v", "bus", 5.4, 0.1, net.bus.index[0], side = None)
-pp.create_measurement(net, "p", "bus", 3.2, 0.2, net.bus.index[0], side = None)
-df = copy(net.measurement)
-
-
-
-
-print(net.measurement)
-net.measurement.drop([0], inplace=True)
-net.measurement.reset_index(inplace=True, drop=True)
-print(net.measurement)
-net.measurement = df
-print(net.measurement)
-
+string1 = "hej vanja!"
+index = [i for i in range(len(string1))]
+new_string = []
+new_index = []
+for i in range(1, len(string1)+1):
+    new_string += string1[-i]
+    new_index.append(f"{index[-i]}")
+# new_string = [new_string[i] for i in range()]
+print(string1)
+print(''.join(new_string))
+print(''.join(new_index))
+# print(type(str(new_string)))

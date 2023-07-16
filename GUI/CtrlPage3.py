@@ -9,7 +9,7 @@ from GUI.DefenseWindow import *
 
 
 
-class CtrlPage2(tk.Frame):
+class CtrlPage3(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
@@ -22,29 +22,28 @@ class CtrlPage2(tk.Frame):
         self.button1.pack(expand=True, fill=tk.BOTH, side = tk.LEFT, padx=5, pady=self.controller.height/3)
 
         self.button2 = tk.Button(self, text="Pause", command=lambda: self.pause_sim())
-        self.button2["state"] = "disabled"
         self.button2.pack(expand=True, fill=tk.BOTH, side = tk.RIGHT, padx=5, pady=self.controller.height/3)
 
 
+        # self.controller.sim_menu.entryconfig("Export Simulation", state="disabled")
+        # self.controller.export_menu.entryconfig("as .xlsx", state="active")
+        # self.controller.export_menu.entryconfig("as .csv", state="active")
+
+        self.button1["state"] = "disabled"
+        self.button2["state"] = "active"
 
 
 
     def start_sim(self):
         self.controller.socket.sendto(START_SIM, (UDP_IP, POWER_PORT))
-        self.controller.sim_menu.entryconfig("Run Scenario", state="disabled")
+        # self.controller.scenario_menu.entryconfig("Load Scenario", state="active")
         self.controller.sim_menu.entryconfig("Export Simulation", state="active")
         self.controller.export_menu.entryconfig("as .xlsx", state="active")
         self.controller.export_menu.entryconfig("as .csv", state="active")
         self.controller.menubar.entryconfig("Window", state="active")
-        # time.sleep(2)
         self.button1["state"] = "disabled"
         self.button2["state"] = "active"
 
-        # if (self.startup):
-        #     self.startup = False
-        #     self.button3["state"] = "active"
-        #     bus_list = [str(list(range(int(self.controller.number_of_buses)))[i]) for i in list(range(int(self.controller.number_of_buses)))]
-        #     self.controller.attack_win = AttackWindow(bus_list)
 
 
     def pause_sim(self):

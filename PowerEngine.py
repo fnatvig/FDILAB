@@ -32,9 +32,12 @@ class PowerEngine:
         self.toggle_defense = False
         self.update_animation  = True
         self.last_measurement = None
+        self.scenario = False
+        self.speed = 50
         self.last_attack = FDIA(active=False)
         self.sim_queue, self.data_queue = Queue(), Queue()
         self.attack_queue, self.defense_queue = Queue(), Queue()
+        self.plot_queue = Queue()
 
         # Confirms that the PowerEngine object is initialized
         self.socket.sendto(POWERENGINE_READY, (UDP_IP, GUI_PORT))
@@ -61,6 +64,14 @@ class PowerEngine:
                     sim_started = True
                 self.sim_queue.put(True)   
             
+            elif (msg == LOAD_STD) and (not sim_started):
+                self.scenario = True
+                if not sim_started:
+                    sim_process.start() 
+                    sim_started = True
+                self.sim_queue.put(True)   
+
+            
             elif msg == PAUSE_SIM:
                 self.sim_queue.put(False)    
 
@@ -72,6 +83,9 @@ class PowerEngine:
                     sim_process.kill()
                 self.reset()
                 self.main()
+
+            elif msg == ACTIVATE_PLOT:
+                self.plot_queue.put(True)
             
             elif msg == ACTIVATE_DEFENSE:
                 self.defense_queue.put(True)
@@ -135,11 +149,15 @@ class PowerEngine:
         self.df = None
         self.net = None
         self.toggle_plot = False
+        self.toggle_defense = False
         self.update_animation  = True
+        self.last_measurement = None
+        self.speed = 50
         self.last_attack = FDIA(active=False)
-
         self.sim_queue, self.data_queue = Queue(), Queue()
         self.attack_queue, self.defense_queue = Queue(), Queue()
+        self.plot_queue = Queue()
+
         
         # Confirms that the PowerEngine object is initialized
         self.socket.sendto(POWERENGINE_READY, (UDP_IP, GUI_PORT))
@@ -170,17 +188,31 @@ class PowerEngine:
 
                 n_ts =  100
                 volatility=0.01
-                lsfp = self.create_load_profile(n_ts, volatility)
-                lsfq = self.create_load_profile(n_ts, volatility)
+                lsfp, lsfq = None, None
+                repeat = True
+                if self.scenario:
+                    lsfp = self.create_load_profile(n_ts=100, volatility=0.02, seed=True)
+                    lsfq = self.create_load_profile(n_ts=100, volatility=0.02, seed=True)
+                    repeat = False
+                else:
+                    lsfp = self.create_load_profile(n_ts, volatility)
+                    lsfq = self.create_load_profile(n_ts, volatility)
                 self.update_animation = True
                 fig, ax = plt.subplots(figsize=(6, 6))
+                fig.canvas.manager.set_window_title('Network Window')
+
                 plt.subplots_adjust(left=0.0, bottom=0.0, top=1.0, right=1.0)
                 pp.plotting.draw_collections([lc, bc, tc, eg], ax=ax)
-                ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, lc, bc, tc, eg, loadc, genc, lsfp, lsfq, base_values), frames =n_ts, interval=50, cache_frame_data=False) 
+                ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, lc, bc, tc, eg, loadc, genc, lsfp, lsfq, base_values), frames =n_ts, interval=self.speed, cache_frame_data=False, repeat=repeat) 
                 plt.show()
+                
     
     def get_measurements(self):
-        bus_data, line_data, trafo_data = self.add_noise(SIGMA_BUS_V, SIGMA_BUS_PQ, SIGMA_LINE, SIGMA_TRAFO)
+        seed = False 
+        if self.scenario:
+            seed = True
+
+        bus_data, line_data, trafo_data = self.add_noise(SIGMA_BUS_V, SIGMA_BUS_PQ, SIGMA_LINE, SIGMA_TRAFO, seed=self.scenario)
         
         # if an attack is initiated from the GUI, the attack vector is filled according to the 
         # data entered in he GUI
@@ -227,7 +259,9 @@ class PowerEngine:
             pp.create_measurement(self.net, "q", "line", line_data.loc["p_to_mw"][i], SIGMA_LINE, element=i, side="to")
 
     # Adds fake measurement error to the power flow results (by multiplying with the different sigma:s)
-    def add_noise(self, sigma_bus_v, sigma_bus_pq, sigma_line, sigma_trafo):
+    def add_noise(self, sigma_bus_v, sigma_bus_pq, sigma_line, sigma_trafo, seed=False):
+        if seed:
+            np.random.seed(1)
 
         bus_data = [np.array(self.net.res_bus.iloc[:]["vm_pu"]+np.random.normal(0,sigma_bus_v, len(self.net.res_bus.index))),
                     np.array(self.net.res_bus.iloc[:]["p_mw"]+np.random.normal(0,sigma_bus_pq, len(self.net.res_bus.index))),
@@ -251,7 +285,10 @@ class PowerEngine:
         return busDF, lineDF, trafoDF 
     
     # Used to create a random load profile (to make the simulation appear realistic over time)
-    def create_load_profile(self, n_ts=24, volatility=0.05):
+    def create_load_profile(self, n_ts=24, volatility=0.05, seed=False):
+        if seed:
+            np.random.seed(1)
+
         n = len(self.net.load.index)
         lsf = np.zeros([n_ts,n])
         lsf_values = np.zeros(n_ts)
@@ -284,10 +321,7 @@ class PowerEngine:
             pp.runpp(self.net, run_control=True, max_iteration=50, calculate_voltage_angles=True, init="results")
             self.get_measurements()
             # print(self.net.measurement)
-            try:
-                self.toggle_defense = self.defense_queue.get(False)
-            except queue.Empty:
-                pass
+
             
             raw_measurements = []
             
@@ -330,6 +364,11 @@ class PowerEngine:
             pre = Preprocessor(df)
             pre.sort_instant()
 
+
+            try:
+                self.toggle_defense = self.defense_queue.get(False)
+            except queue.Empty:
+                pass
             verdict = filter(self.toggle_defense, pre.df)
             
             if verdict == "attack":
@@ -353,10 +392,12 @@ class PowerEngine:
             max = np.array(self.net.bus.iloc[:]['max_vm_pu'])*vm_pu
 
             
+            try:
+                self.toggle_plot = self.plot_queue.get(False)
+            except queue.Empty:
+                pass
 
             if self.toggle_plot:
-
-                # plot_data = struct.pack("f", vm_pu[0], vm_pu_est[0])
                 plot_data = struct.pack("f", self.evaluate())
                 self.socket.sendto(plot_data, (UDP_IP, PLOT_PORT))
 
@@ -395,6 +436,7 @@ class PowerEngine:
                 draw_list.append(bic_b_est)
 
             self.time_iteration +=1 
+
             plt.cla()
             pp.plotting.draw_collections(draw_list, ax=ax)
 

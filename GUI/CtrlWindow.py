@@ -1,10 +1,13 @@
 import tkinter as tk
 from socket import *
 import sys
+from threading import *
+
 
 from constants import *
 from GUI.CtrlPage1 import *
 from GUI.CtrlPage2 import *
+from GUI.CtrlPage3 import *
 from GUI.AttackWindow import *
 # from GUI.PlotServer import *
 
@@ -26,21 +29,32 @@ class CtrlWindow(tk.Tk):
         self.attack_win =None
         self.defense_win =None
         self.eval_win = None
+        self.scenario = False
+
         self.running = True
         self.frames = {}
         self.menubar = tk.Menu(self)
         self.config(menu=self.menubar)
         self.p = None
         self.sim_menu = tk.Menu(self.menubar, tearoff=False)
+        self.scenario_menu = tk.Menu(self.sim_menu, tearoff=False)
+        self.scenario_menu.add_command(
+        label='Run Standard Scenario',
+        state="disabled",
+        command=lambda: self.load_scenario(LOAD_STD)
+            )
+        self.sim_menu.add_cascade(
+        label='Run Scenario',
+        state="disabled",
+        menu = self.scenario_menu
+            )
         self.export_menu = tk.Menu(self.sim_menu, tearoff=False)
         self.export_menu.add_command(
         label='as .xlsx',
-        state="disabled",
         command=lambda: self.export_sim(EXPORT_EXCEL)
             )
         self.export_menu.add_command(
         label='as .csv',
-        state="disabled",
         command=lambda: self.export_sim(EXPORT_CSV)
             )
         self.sim_menu.add_cascade(
@@ -67,36 +81,65 @@ class CtrlWindow(tk.Tk):
         label='Open Evaluation Window',
         command=lambda: self.open_evaluation_window())
         self.action_menu.add_command(
-        label='Open Attack Panel',
+        label='Open Attack Window',
         command=lambda: self.open_attack_panel())
         self.action_menu.add_command(
-        label='Open Defense Panel',
+        label='Open Defense Window',
         command=lambda: self.open_defense_panel())
 
         self.menubar.add_cascade(
-            label="Action",
+            label="Window",
             state="disabled",
             menu=self.action_menu)
         
-        for F in (CtrlPage1, CtrlPage2):
+        for F in (CtrlPage1, CtrlPage2, CtrlPage3):
             frame = F(self.container, self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
+
+    def load_scenario(self, msg):
+
+        self.socket.sendto(LOAD_STD, (UDP_IP, POWER_PORT))
+        self.sim_menu.entryconfig("Export Simulation", state="active")
+        self.sim_menu.entryconfig("Run Scenario", state="disabled")
+        self.show_page(CtrlPage3)
+
 
     def export_sim(self, msg):
         self.socket.sendto(SAVE_SIM, (UDP_IP, POWER_PORT))
         time.sleep(0.1)
         self.socket.sendto(msg, (UDP_IP, POWER_PORT))
 
+    def eval_win_open(self):
+        msg = self.socket.recv(1024)
+        if msg == PLOT_CLOSED:
+            self.action_menu.entryconfig("Open Evaluation Window", state="active")
+
+        
+        
+
     def open_evaluation_window(self):
+        # self.action_menu.entryconfig("Open Evaluation Window", state="disabled")
+        self.action_menu.entryconfig("Open Evaluation Window", state="disabled")
         self.socket.sendto(ACTIVATE_PLOT, (UDP_IP, PLOT_PORT))
+        self.socket.sendto(ACTIVATE_PLOT, (UDP_IP, POWER_PORT))
+        Thread(target=self.eval_win_open).start()
+        
 
     def open_attack_panel(self):
+        # self.action_menu.entryconfig("Open Attack Window", state="disabled")
+        # if (self.attack_win == None) or (not self.attack_win.open): 
         bus_list = [str(list(range(int(self.number_of_buses)))[i]) for i in list(range(int(self.number_of_buses)))]
         self.attack_win = AttackWindow(bus_list)
+        self.action_menu.entryconfig("Open Attack Window", state="disabled")
+        self.attack_win.protocol("WM_DELETE_WINDOW", lambda: self.attack_win.on_closing(self.action_menu))            
 
     def open_defense_panel(self):
+        # self.action_menu.entryconfig("Open Defense Window", state="disabled")
         self.defense_win = DefenseWindow()
+        self.action_menu.entryconfig("Open Defense Window", state="disabled")
+        self.defense_win.protocol("WM_DELETE_WINDOW", lambda: self.defense_win.on_closing(self.action_menu))            
+
 
     def show_page(self, cont):
         frame = self.frames[cont]
@@ -117,6 +160,7 @@ class CtrlWindow(tk.Tk):
 
     def on_closing(self):
         self.socket.sendto(KILL_SIM, (UDP_IP, POWER_PORT))
+        self.socket.sendto(KILL_PLOT, (UDP_IP, PLOT_PORT))
         if not (self.p == None):
             for p in self.p:
                 if p.is_alive():
@@ -137,11 +181,16 @@ class CtrlWindow(tk.Tk):
         self.destroy()
 
     def reset_sim(self):
+        self.sim_menu.entryconfig("Run Scenario", state="disabled")
         self.sim_menu.entryconfig("Stop Simulation", state="disabled")
         self.sim_menu.entryconfig("Export Simulation", state="disabled")
-        self.menubar.entryconfig("Action", state="disabled")
+        self.action_menu.entryconfig("Open Defense Window", state="active")
+        self.action_menu.entryconfig("Open Attack Window", state="active")
+        self.action_menu.entryconfig("Open Evaluation Window", state="active")
+        self.menubar.entryconfig("Window", state="disabled")
 
         self.socket.sendto(RESET_SIM, (UDP_IP, POWER_PORT))
+        self.socket.sendto(RESET_PLOT, (UDP_IP, PLOT_PORT))
 
         for frame in self.frames.values():
             frame.destroy()
@@ -157,7 +206,7 @@ class CtrlWindow(tk.Tk):
                 self.defense_win.destroy()
             except tk.TclError:
                 pass
-        for F in (CtrlPage1, CtrlPage2):
+        for F in (CtrlPage1, CtrlPage2, CtrlPage3):
             frame = F(self.container, self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")

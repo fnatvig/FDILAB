@@ -21,10 +21,10 @@ class FDIA:
             case "bus":
 
                 match self.a_number:
-                    # Single bus attack 
-                    case 0:
-                        self.attack_vector = len(net.bus.index)*[1.0]
-                        self.attack_vector[self.element] = self.intensity
+                    # # Single bus attack 
+                    # case 0:
+                    #     self.attack_vector = len(net.bus.index)*[1.0]
+                    #     self.attack_vector[self.element] = self.intensity
                     # Attack on an all buses
                     case 1:
                         self.attack_vector = self.intensity

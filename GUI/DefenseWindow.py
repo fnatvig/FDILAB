@@ -9,7 +9,7 @@ from GUI.DefensePage import *
 class DefenseWindow(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
-        self.title("Defense Panel")
+        self.title("Defense Window")
         # self.geometry("300x50")
         ws = self.winfo_screenwidth() # width of the screen
         hs = self.winfo_screenheight()
@@ -23,7 +23,10 @@ class DefenseWindow(tk.Tk):
         self.frames[DefensePage] = frame
         frame.grid(row=0, column=0, sticky="nsew")
         self.show_page(DefensePage)
-        
+
+    def on_closing(self, action_menu):
+        action_menu.entryconfig("Open Defense Window", state="active")
+        self.destroy()
 
     def show_page(self, cont):
         frame = self.frames[cont]

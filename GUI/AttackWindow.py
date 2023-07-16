@@ -10,7 +10,7 @@ class AttackWindow(tk.Tk):
         tk.Tk.__init__(self)
         ws = self.winfo_screenwidth() # width of the screen
         hs = self.winfo_screenheight()
-        self.title("Attack Panel")
+        self.title("Attack Window")
         self.geometry(f"+{int(ws/2)}+{int(hs/9)}")
         self.container = tk.Frame(self)
         self.container.pack()
@@ -22,6 +22,9 @@ class AttackWindow(tk.Tk):
         frame.grid(row=0, column=0, sticky="nsew")
         self.show_page(AttackPage)
         
+    def on_closing(self, action_menu):
+        action_menu.entryconfig("Open Defense Window", state="active")
+        self.destroy()
 
     def show_page(self, cont):
         frame = self.frames[cont]
