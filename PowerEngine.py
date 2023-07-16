@@ -32,7 +32,8 @@ class PowerEngine:
         self.toggle_defense = False
         self.update_animation  = True
         self.last_measurement = None
-        self.scenario = False
+        self.scenario_toggle = False
+        self.scenario = None
         self.speed = 50
         self.last_attack = FDIA(active=False)
         self.sim_queue, self.data_queue = Queue(), Queue()
@@ -64,13 +65,14 @@ class PowerEngine:
                     sim_started = True
                 self.sim_queue.put(True)   
             
-            elif (msg == LOAD_STD) and (not sim_started):
-                self.scenario = True
+            elif (msg == LOAD_SCENARIO) and (not sim_started):
+                self.scenario_toggle = True
+                self.scenario = self.socket.recv(1024)
+                print(self.scenario)
                 if not sim_started:
                     sim_process.start() 
                     sim_started = True
                 self.sim_queue.put(True)   
-
             
             elif msg == PAUSE_SIM:
                 self.sim_queue.put(False)    
@@ -190,7 +192,7 @@ class PowerEngine:
                 volatility=0.01
                 lsfp, lsfq = None, None
                 repeat = True
-                if self.scenario:
+                if self.scenario_toggle:
                     lsfp = self.create_load_profile(n_ts=100, volatility=0.02, seed=True)
                     lsfq = self.create_load_profile(n_ts=100, volatility=0.02, seed=True)
                     repeat = False
@@ -209,10 +211,10 @@ class PowerEngine:
     
     def get_measurements(self):
         seed = False 
-        if self.scenario:
+        if self.scenario_toggle:
             seed = True
 
-        bus_data, line_data, trafo_data = self.add_noise(SIGMA_BUS_V, SIGMA_BUS_PQ, SIGMA_LINE, SIGMA_TRAFO, seed=self.scenario)
+        bus_data, line_data, trafo_data = self.add_noise(SIGMA_BUS_V, SIGMA_BUS_PQ, SIGMA_LINE, SIGMA_TRAFO, seed=self.scenario_toggle)
         
         # if an attack is initiated from the GUI, the attack vector is filled according to the 
         # data entered in he GUI

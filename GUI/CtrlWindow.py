@@ -35,13 +35,18 @@ class CtrlWindow(tk.Tk):
         self.frames = {}
         self.menubar = tk.Menu(self)
         self.config(menu=self.menubar)
-        self.p = None
+        self.p, self.t = None, None
         self.sim_menu = tk.Menu(self.menubar, tearoff=False)
         self.scenario_menu = tk.Menu(self.sim_menu, tearoff=False)
         self.scenario_menu.add_command(
-        label='Run Standard Scenario',
+        label='Run Scenario 1 (unattacked)',
         state="disabled",
-        command=lambda: self.load_scenario(LOAD_STD)
+        command=lambda: self.load_scenario(SCENARIO1_UNATTACKED)
+            )
+        self.scenario_menu.add_command(
+        label='Run Scenario 1 (attacked)',
+        state="disabled",
+        command=lambda: self.load_scenario(SCENARIO1_ATTACKED)
             )
         self.sim_menu.add_cascade(
         label='Run Scenario',
@@ -99,7 +104,8 @@ class CtrlWindow(tk.Tk):
 
     def load_scenario(self, msg):
 
-        self.socket.sendto(LOAD_STD, (UDP_IP, POWER_PORT))
+        self.socket.sendto(LOAD_SCENARIO, (UDP_IP, POWER_PORT))
+        self.socket.sendto(msg, (UDP_IP, POWER_PORT))
         self.sim_menu.entryconfig("Export Simulation", state="active")
         self.sim_menu.entryconfig("Run Scenario", state="disabled")
         self.show_page(CtrlPage3)
@@ -114,12 +120,10 @@ class CtrlWindow(tk.Tk):
         msg = self.socket.recv(1024)
         if msg == PLOT_CLOSED:
             self.action_menu.entryconfig("Open Evaluation Window", state="active")
-
-        
-        
+        elif msg == KILL_PLOT:
+            pass
 
     def open_evaluation_window(self):
-        # self.action_menu.entryconfig("Open Evaluation Window", state="disabled")
         self.action_menu.entryconfig("Open Evaluation Window", state="disabled")
         self.socket.sendto(ACTIVATE_PLOT, (UDP_IP, PLOT_PORT))
         self.socket.sendto(ACTIVATE_PLOT, (UDP_IP, POWER_PORT))
@@ -161,10 +165,12 @@ class CtrlWindow(tk.Tk):
     def on_closing(self):
         self.socket.sendto(KILL_SIM, (UDP_IP, POWER_PORT))
         self.socket.sendto(KILL_PLOT, (UDP_IP, PLOT_PORT))
+        self.socket.sendto(KILL_PLOT, (UDP_IP, GUI_PORT))
         if not (self.p == None):
             for p in self.p:
                 if p.is_alive():
                     p.kill()
+        
         
         if not (self.attack_win ==None):
             try:

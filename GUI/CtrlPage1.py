@@ -21,19 +21,15 @@ class CtrlPage1(tk.Frame):
     def send_msg(self, msg):
         self.controller.socket.sendto(msg, (UDP_IP, POWER_PORT))
         self.controller.sim_menu.entryconfig("Run Scenario", state="active")
-        self.controller.scenario_menu.entryconfig("Run Standard Scenario", state="active")
+        self.controller.scenario_menu.entryconfig("Run Scenario 1 (unattacked)", state="active")
+        self.controller.scenario_menu.entryconfig("Run Scenario 1 (attacked)", state="active")
         self.controller.sim_menu.entryconfig("Stop Simulation", state="active")
+        self.controller.menubar.entryconfig("Window", state="active")
 
         if msg == LOAD14:
-            self.controller.menubar.entryconfig("Window", state="active")
-
             self.controller.number_of_buses = 14
-            self.controller.show_page(CtrlPage2)
-            # self.controller.menubar.entryconfig("Simulation", state="active")
-
         elif msg == LOAD9:
-            self.controller.menubar.entryconfig("Window", state="active")
             self.controller.number_of_buses = 9
-            self.controller.show_page(CtrlPage2)
-            # self.controller.menubar.entryconfig("Simulation", state="active")
+
+        self.controller.show_page(CtrlPage2)
 

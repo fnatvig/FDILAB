@@ -22,11 +22,11 @@ class CtrlPage2(tk.Frame):
         self.button1.pack(expand=True, fill=tk.BOTH, side = tk.LEFT, padx=5, pady=self.controller.height/3)
 
         self.button2 = tk.Button(self, text="Pause", command=lambda: self.pause_sim())
-        self.button2["state"] = "disabled"
         self.button2.pack(expand=True, fill=tk.BOTH, side = tk.RIGHT, padx=5, pady=self.controller.height/3)
 
 
-
+        self.button1["state"] = "active"
+        self.button2["state"] = "disabled"       
 
 
     def start_sim(self):
