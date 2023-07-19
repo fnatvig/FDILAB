@@ -11,11 +11,14 @@ import matplotlib.animation as animation
 import struct
 import os
 from copy import copy
+import sys
 
 from constants import *
 from FDIA import *
 from Preprocessor import *
 from scripts.kNN_9bus import *
+from scenarios.Scenario import *
+from scenarios.AttackBot import *
 
 class PowerEngine:
     def __init__(self):
@@ -35,6 +38,7 @@ class PowerEngine:
         self.scenario_toggle = False
         self.scenario = None
         self.speed = 50
+        self.attackbot = AttackBot()
         self.last_attack = FDIA(active=False)
         self.sim_queue, self.data_queue = Queue(), Queue()
         self.attack_queue, self.defense_queue = Queue(), Queue()
@@ -58,6 +62,7 @@ class PowerEngine:
         sim_started = False
         buses, m_types, intensities = [], [], []
         while True:
+
             msg = self.socket.recv(1024)
             if msg == START_SIM:
                 if not sim_started:
@@ -67,8 +72,10 @@ class PowerEngine:
             
             elif (msg == LOAD_SCENARIO) and (not sim_started):
                 self.scenario_toggle = True
-                self.scenario = self.socket.recv(1024)
-                print(self.scenario)
+                nr = self.socket.recv(1024)
+                self.scenario = Scenario(nr)
+                self.attackbot.scenario = nr
+                self.attackbot.set_active()
                 if not sim_started:
                     sim_process.start() 
                     sim_started = True
@@ -100,6 +107,7 @@ class PowerEngine:
                 size = self.data_queue.qsize()
                 self.df = pd.DataFrame(columns=["time", "bus", "V", "P", "Q", "label"])
                 for i in range(size):
+                    print(f"Exporting simulation... {i}/{size-1}", end="\r")
                     self.df.loc[len(self.df)] = self.data_queue.get()
                 preprocessor = Preprocessor(self.df)
                 preprocessor.sort()
@@ -110,11 +118,14 @@ class PowerEngine:
                 if not os.path.exists("data_exports"):
                     os.mkdir("data_exports")
                 self.df.to_csv("data_exports/data_export.csv")
+                print("The simulation has been successfully exported!")
+
 
             elif msg == EXPORT_EXCEL:
                 if not os.path.exists("data_exports"):
                     os.mkdir("data_exports")
                 self.df.to_excel("data_exports/data_export.xlsx")
+                print("The simulation has been successfully exported!")
             
             unpacked = struct.unpack("i 12x", msg)
             if unpacked[0] == MULTI_BUS_ATTACK:
@@ -159,12 +170,10 @@ class PowerEngine:
         self.sim_queue, self.data_queue = Queue(), Queue()
         self.attack_queue, self.defense_queue = Queue(), Queue()
         self.plot_queue = Queue()
-
-        
         # Confirms that the PowerEngine object is initialized
         self.socket.sendto(POWERENGINE_READY, (UDP_IP, GUI_PORT))
+    
     def sim(self):
-        i = 0
         is_running = True
         while True:
             try:
@@ -181,31 +190,32 @@ class PowerEngine:
                 self.get_measurements()
                 est.estimate(self.net, calculate_voltage_angles=True, init="flat")
 
-                lc = pp.plotting.create_line_collection(self.net, color="black", zorder=1)
+                sys.stdout = open(os.devnull, 'w')
+                lc = pp.plotting.create_line_collection(self.net, color="black", zorder=1, use_bus_geodata=True)
                 bc = pp.plotting.create_bus_collection(self.net, self.net.bus.index, size=0.03, color="b", zorder=2)
-                tc = pp.plotting.create_trafo_collection(self.net, color="black", size=0.05, zorder=1)
                 eg = pp.plotting.create_ext_grid_collection(self.net, color="black", size=0.1, zorder=1, orientation=3.14159) 
                 loadc = pp.plotting.create_load_collection(self.net, color="black", zorder=1, size=0.1) 
+                tc = pp.plotting.create_trafo_collection(self.net, color="black", size=0.05, zorder=1)
                 genc = pp.plotting.create_gen_collection(self.net, size=0.1, color="black", zorder=1, orientation=3.14159*2) 
-
+                sys.stdout = sys.__stdout__
                 n_ts =  100
                 volatility=0.01
-                lsfp, lsfq = None, None
+                load_prof_p, load_prof_q = None, None
                 repeat = True
                 if self.scenario_toggle:
-                    lsfp = self.create_load_profile(n_ts=100, volatility=0.02, seed=True)
-                    lsfq = self.create_load_profile(n_ts=100, volatility=0.02, seed=True)
+                    load_prof_p = self.scenario.create_load_profile(net=self.net)
+                    load_prof_q = self.scenario.create_load_profile(net=self.net)
                     repeat = False
                 else:
-                    lsfp = self.create_load_profile(n_ts, volatility)
-                    lsfq = self.create_load_profile(n_ts, volatility)
+                    load_prof_p = self.create_load_profile(n_ts, volatility)
+                    load_prof_q = self.create_load_profile(n_ts, volatility)
                 self.update_animation = True
                 fig, ax = plt.subplots(figsize=(6, 6))
                 fig.canvas.manager.set_window_title('Network Window')
 
                 plt.subplots_adjust(left=0.0, bottom=0.0, top=1.0, right=1.0)
                 pp.plotting.draw_collections([lc, bc, tc, eg], ax=ax)
-                ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, lc, bc, tc, eg, loadc, genc, lsfp, lsfq, base_values), frames =n_ts, interval=self.speed, cache_frame_data=False, repeat=repeat) 
+                ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, lc, bc, tc, eg, loadc, genc, load_prof_p, load_prof_q, base_values), frames =n_ts, interval=self.speed, cache_frame_data=False, repeat=repeat) 
                 plt.show()
                 
     
@@ -226,8 +236,6 @@ class PowerEngine:
             atr1, atr2, atr3, atr4, atr5, atr6, atr7 = attack.get_attributes()
             self.last_attack = FDIA(atr1, atr2, atr3, atr4, atr5, atr6)
             self.last_attack.fill_attack_vector(self.net)
-
-
 
         # if an attack wasn't initiated
         except queue.Empty:
@@ -288,8 +296,8 @@ class PowerEngine:
     
     # Used to create a random load profile (to make the simulation appear realistic over time)
     def create_load_profile(self, n_ts=24, volatility=0.05, seed=False):
-        if seed:
-            np.random.seed(1)
+        # if seed:
+            # np.random.seed(1)
 
         n = len(self.net.load.index)
         lsf = np.zeros([n_ts,n])
@@ -313,6 +321,10 @@ class PowerEngine:
         except queue.Empty:
             pass
         if self.update_animation:
+
+            if self.attackbot.active:
+                self.attackbot.main([str(list(range(len(self.net.bus)))[i]) for i in list(range(len(self.net.bus)))])
+
             draw_list = [lc, bc, tc, eg, loadc, genc]
             self.net.load.loc[:, "p_mw"] *= load_list_p[i][:] 
             self.net.load.loc[:, "q_mvar"] *= load_list_q[i][:] 
@@ -440,6 +452,7 @@ class PowerEngine:
             self.time_iteration +=1 
 
             plt.cla()
+
             pp.plotting.draw_collections(draw_list, ax=ax)
 
     def evaluate(self):

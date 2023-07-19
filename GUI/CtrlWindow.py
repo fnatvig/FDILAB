@@ -41,12 +41,12 @@ class CtrlWindow(tk.Tk):
         self.scenario_menu.add_command(
         label='Run Scenario 1 (unattacked)',
         state="disabled",
-        command=lambda: self.load_scenario(SCENARIO1_UNATTACKED)
+        command=lambda: self.load_scenario(STANDARDSCENARIO_UNATTACKED)
             )
         self.scenario_menu.add_command(
         label='Run Scenario 1 (attacked)',
         state="disabled",
-        command=lambda: self.load_scenario(SCENARIO1_ATTACKED)
+        command=lambda: self.load_scenario(STANDARDSCENARIO_ATTACKED)
             )
         self.sim_menu.add_cascade(
         label='Run Scenario',
