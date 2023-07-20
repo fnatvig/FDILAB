@@ -8,7 +8,7 @@ The application is only tested with python version Python 3.10.10, although I be
 1. Clone the repo, cd into it with git bash and run the command ``` git checkout stable ``` (to change to the stable branch). 
 2. Run the command: python main.py
 3. Wait until the control panel window pops up
- ---TBD---
+4. ---TBD---
 
 # How to interpret the results
 ---TBD---
