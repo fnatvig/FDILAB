@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 
 from constants import *
+
 # Class for False Data Injection Attacks
 class FDIA:
 
@@ -19,13 +20,7 @@ class FDIA:
     def fill_attack_vector(self, net):
         match self.e_type:
             case "bus":
-
                 match self.a_number:
-                    # # Single bus attack 
-                    # case 0:
-                    #     self.attack_vector = len(net.bus.index)*[1.0]
-                    #     self.attack_vector[self.element] = self.intensity
-                    # Attack on an all buses
                     case 1:
                         self.attack_vector = self.intensity
 

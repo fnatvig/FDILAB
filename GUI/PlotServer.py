@@ -26,7 +26,7 @@ class PlotServer:
             self.y.append(y_new)
             self.x.append(self.time)
             self.time +=1
-            if self.flag or (len(self.y)>100):
+            if self.flag or (len(self.y)>500):
                 del self.y[0]
                 del self.x[0]
                 self.flag = False
@@ -55,7 +55,7 @@ class PlotServer:
         fig = plt.figure()
         fig.canvas.manager.set_window_title('Evaluation Window')
         fig.canvas.mpl_connect('close_event', self.on_close)
-        ani = FuncAnimation(plt.gcf(), func=self.animate, interval=100, cache_frame_data=False)
+        ani = FuncAnimation(plt.gcf(), func=self.animate, interval=50, cache_frame_data=False)
         plt.tight_layout()
         plt.show()
 

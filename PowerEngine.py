@@ -154,8 +154,12 @@ class PowerEngine:
                 m_types.append(m_type)
                 intensities.append(intensity)
                 if len(buses) == len(self.net.bus.index):
+                    print(buses)
+                    print(m_types)
+                    print(intensities)
                     attack = FDIA(True, "bus", buses, m_types, 1, intensities)
                     buses, m_types, intensities = [], [], []
+                    # print(attack)
                     self.attack_queue.put(attack)
     def reset(self):
         self.time_iteration = 0
@@ -165,7 +169,7 @@ class PowerEngine:
         self.toggle_defense = False
         self.update_animation  = True
         self.last_measurement = None
-        self.speed = 50
+        self.speed = 1
         self.last_attack = FDIA(active=False)
         self.sim_queue, self.data_queue = Queue(), Queue()
         self.attack_queue, self.defense_queue = Queue(), Queue()
@@ -212,10 +216,9 @@ class PowerEngine:
                 self.update_animation = True
                 fig, ax = plt.subplots(figsize=(6, 6))
                 fig.canvas.manager.set_window_title('Network Window')
-
                 plt.subplots_adjust(left=0.0, bottom=0.0, top=1.0, right=1.0)
                 pp.plotting.draw_collections([lc, bc, tc, eg], ax=ax)
-                ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, lc, bc, tc, eg, loadc, genc, load_prof_p, load_prof_q, base_values), frames =n_ts, interval=self.speed, cache_frame_data=False, repeat=repeat) 
+                ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, lc, bc, tc, eg, loadc, genc, load_prof_p, load_prof_q, base_values), frames =len(load_prof_p), interval=self.speed, cache_frame_data=False, repeat=repeat) 
                 plt.show()
                 
     
@@ -226,20 +229,31 @@ class PowerEngine:
 
         bus_data, line_data, trafo_data = self.add_noise(SIGMA_BUS_V, SIGMA_BUS_PQ, SIGMA_LINE, SIGMA_TRAFO, seed=self.scenario_toggle)
         
-        # if an attack is initiated from the GUI, the attack vector is filled according to the 
-        # data entered in he GUI
-        try:
-            attack=self.attack_queue.get(False)
-            attack.fill_attack_vector(self.net)
-            bus_data, line_data, trafo_data = attack.execute_attack(bus_data, line_data, trafo_data)
-            # print(attack.get_attributes())
-            atr1, atr2, atr3, atr4, atr5, atr6, atr7 = attack.get_attributes()
-            self.last_attack = FDIA(atr1, atr2, atr3, atr4, atr5, atr6)
-            self.last_attack.fill_attack_vector(self.net)
+        if self.scenario_toggle:
+            if self.attackbot.active:
+                intensities, m_types = self.attackbot.main(list(range(len(self.net.bus))))
+                attack = FDIA(True, "bus", list(range(len(self.net.bus))), m_types, 1, intensities)
+                attack.fill_attack_vector(self.net)
+                bus_data, line_data, trafo_data = attack.execute_attack(bus_data, line_data, trafo_data)
+                # print(attack.get_attributes())
+                atr1, atr2, atr3, atr4, atr5, atr6, atr7 = attack.get_attributes()
+                self.last_attack = FDIA(atr1, atr2, atr3, atr4, atr5, atr6)
+                self.last_attack.fill_attack_vector(self.net)
+        else:
+            # if an attack is initiated from the GUI, the attack vector is filled according to the 
+            # data entered in he GUI
+            try:
+                attack=self.attack_queue.get(False)
+                attack.fill_attack_vector(self.net)
+                bus_data, line_data, trafo_data = attack.execute_attack(bus_data, line_data, trafo_data)
+                # print(attack.get_attributes())
+                atr1, atr2, atr3, atr4, atr5, atr6, atr7 = attack.get_attributes()
+                self.last_attack = FDIA(atr1, atr2, atr3, atr4, atr5, atr6)
+                self.last_attack.fill_attack_vector(self.net)
 
-        # if an attack wasn't initiated
-        except queue.Empty:
-            pass
+            # if an attack wasn't initiated
+            except queue.Empty:
+                pass
 
         # to keep the last attack vector
         if self.last_attack.active:
@@ -322,8 +336,8 @@ class PowerEngine:
             pass
         if self.update_animation:
 
-            if self.attackbot.active:
-                self.attackbot.main([str(list(range(len(self.net.bus)))[i]) for i in list(range(len(self.net.bus)))])
+            # if self.attackbot.active:
+            #     self.attackbot.main([str(list(range(len(self.net.bus)))[i]) for i in list(range(len(self.net.bus)))])
 
             draw_list = [lc, bc, tc, eg, loadc, genc]
             self.net.load.loc[:, "p_mw"] *= load_list_p[i][:] 
