@@ -16,7 +16,7 @@ class PlotServer:
         self.y, self.x = [], []
         self.flag = True
         self.time = 0
-        self.socket.sendto(PLOTSERVER_READY, (UDP_IP, GUI_PORT))
+        self.socket.sendto(PLOTSERVER_READY, (UDP_IP, GUI_PORT1))
         
     def animate(self, i):
         try:
@@ -48,7 +48,7 @@ class PlotServer:
                 break
 
     def on_close(self, event):
-        self.socket.sendto(PLOT_CLOSED, (UDP_IP, GUI_PORT))
+        self.socket.sendto(PLOT_CLOSED, (UDP_IP, GUI_PORT1))
         self.socket.sendto(RESET_PLOT, (UDP_IP, PLOT_PORT))
 
     def child_process(self):

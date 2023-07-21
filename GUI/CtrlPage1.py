@@ -19,7 +19,7 @@ class CtrlPage1(tk.Frame):
 
 
     def send_msg(self, msg):
-        self.controller.socket.sendto(msg, (UDP_IP, POWER_PORT))
+        self.controller.socket1.sendto(msg, (UDP_IP, POWER_PORT))
         self.controller.sim_menu.entryconfig("Run Scenario", state="active")
         self.controller.scenario_menu.entryconfig("Run Scenario 1 (unattacked)", state="active")
         self.controller.scenario_menu.entryconfig("Run Scenario 1 (attacked)", state="active")

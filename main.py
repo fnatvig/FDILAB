@@ -1,6 +1,5 @@
 from multiprocessing import Process
 
-import plotServer
 from PowerEngine import *
 from GUI.CtrlPage1 import *
 from GUI.CtrlPage2 import *

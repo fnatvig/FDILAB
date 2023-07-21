@@ -35,7 +35,7 @@ class CtrlPage3(tk.Frame):
 
 
     def start_sim(self):
-        self.controller.socket.sendto(START_SIM, (UDP_IP, POWER_PORT))
+        self.controller.socket1.sendto(START_SIM, (UDP_IP, POWER_PORT))
         # self.controller.scenario_menu.entryconfig("Load Scenario", state="active")
         self.controller.sim_menu.entryconfig("Export Simulation", state="active")
         self.controller.export_menu.entryconfig("as .xlsx", state="active")
@@ -47,7 +47,7 @@ class CtrlPage3(tk.Frame):
 
 
     def pause_sim(self):
-        self.controller.socket.sendto(PAUSE_SIM, (UDP_IP, POWER_PORT))
+        self.controller.socket1.sendto(PAUSE_SIM, (UDP_IP, POWER_PORT))
         if (self.button1["state"] == "disabled"):
             self.button1["state"] = "active"
             self.button2["state"] = "disabled"

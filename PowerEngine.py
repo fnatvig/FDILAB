@@ -45,7 +45,7 @@ class PowerEngine:
         self.plot_queue = Queue()
 
         # Confirms that the PowerEngine object is initialized
-        self.socket.sendto(POWERENGINE_READY, (UDP_IP, GUI_PORT))
+        self.socket.sendto(POWERENGINE_READY, (UDP_IP, GUI_PORT1))
             
     def main(self):
 
@@ -113,18 +113,22 @@ class PowerEngine:
                 preprocessor.sort()
                 self.df = preprocessor.df
                 sim_process.kill()
+                self.filename = bytes.decode(self.socket.recv(1024),"utf-8")
 
             elif msg == EXPORT_CSV:
+
                 if not os.path.exists("data_exports"):
                     os.mkdir("data_exports")
-                self.df.to_csv("data_exports/data_export.csv")
+                
+                self.df.to_csv("data_exports/"+self.filename+".csv")
                 print("The simulation has been successfully exported!")
 
 
             elif msg == EXPORT_EXCEL:
                 if not os.path.exists("data_exports"):
                     os.mkdir("data_exports")
-                self.df.to_excel("data_exports/data_export.xlsx")
+                self.df.to_excel("data_exports/"+self.filename+".xlsx")
+                # self.df.to_excel("data_exports/data_export.xlsx")
                 print("The simulation has been successfully exported!")
             
             unpacked = struct.unpack("i 12x", msg)
@@ -175,7 +179,7 @@ class PowerEngine:
         self.attack_queue, self.defense_queue = Queue(), Queue()
         self.plot_queue = Queue()
         # Confirms that the PowerEngine object is initialized
-        self.socket.sendto(POWERENGINE_READY, (UDP_IP, GUI_PORT))
+        self.socket.sendto(POWERENGINE_READY, (UDP_IP, GUI_PORT1))
     
     def sim(self):
         is_running = True

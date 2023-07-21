@@ -8,7 +8,9 @@ from constants import *
 from GUI.CtrlPage1 import *
 from GUI.CtrlPage2 import *
 from GUI.CtrlPage3 import *
+from GUI.CtrlPage4 import *
 from GUI.AttackWindow import *
+from GUI.ExportWindow import *
 # from GUI.PlotServer import *
 
 class CtrlWindow(tk.Tk):
@@ -24,12 +26,16 @@ class CtrlWindow(tk.Tk):
         hs = self.winfo_screenheight()
         self.geometry(f"+{int(2*ws/5)}+{int(hs/9)}")
         self.container.pack()
-        self.socket = socket(AF_INET, SOCK_DGRAM)
-        self.socket.bind(("127.0.0.1", GUI_PORT))
+        self.socket1 = socket(AF_INET, SOCK_DGRAM)
+        self.socket1.bind(("127.0.0.1", GUI_PORT1))
+        self.socket2 = socket(AF_INET, SOCK_DGRAM)
+        self.socket2.bind(("127.0.0.1", GUI_PORT2))
         self.attack_win =None
         self.defense_win =None
+        self.export_win =None
         self.eval_win = None
         self.scenario = False
+        self.reset=True
 
         self.running = True
         self.frames = {}
@@ -107,27 +113,46 @@ class CtrlWindow(tk.Tk):
             state="disabled",
             menu=self.action_menu)
         
-        for F in (CtrlPage1, CtrlPage2, CtrlPage3):
+        for F in (CtrlPage1, CtrlPage2, CtrlPage3, CtrlPage4):
             frame = F(self.container, self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
 
     def load_scenario(self, msg):
 
-        self.socket.sendto(LOAD_SCENARIO, (UDP_IP, POWER_PORT))
-        self.socket.sendto(msg, (UDP_IP, POWER_PORT))
+        self.socket1.sendto(LOAD_SCENARIO, (UDP_IP, POWER_PORT))
+        self.socket1.sendto(msg, (UDP_IP, POWER_PORT))
         self.sim_menu.entryconfig("Export Simulation", state="active")
         self.sim_menu.entryconfig("Run Scenario", state="disabled")
         self.show_page(CtrlPage3)
 
+    def export_win_open(self):
+        msg = self.socket2.recv(1024)
+        if msg == EXPORT_DONE:
+            self.sim_menu.entryconfig("Run Scenario", state="disabled")
+            self.sim_menu.entryconfig("Stop Simulation", state="disabled")
+            self.sim_menu.entryconfig("Export Simulation", state="disabled")
+            self.menubar.entryconfig("Window", state="disabled")
+            self.show_page(CtrlPage4)
+        elif msg == EXPORT_CLOSED:
+            self.export_menu.entryconfig("as .xlsx", state="active")
+
+    #         elif msg == PLOT_CLOSED:
+    #             self.action_menu.entryconfig("Open Evaluation Window", state="active")
+
+    #         elif msg == KILL_GUI:
+    #             break
+
 
     def export_sim(self, msg):
-        self.socket.sendto(SAVE_SIM, (UDP_IP, POWER_PORT))
-        time.sleep(0.1)
-        self.socket.sendto(msg, (UDP_IP, POWER_PORT))
+        self.export_win = ExportWindow(msg)
+        Thread(target=self.export_win_open).start()
+        self.export_menu.entryconfig("as .xlsx", state="disabled")        
+        self.export_win.protocol("WM_DELETE_WINDOW", lambda: self.export_win.on_closing(False))  
+                  
 
     def eval_win_open(self):
-        msg = self.socket.recv(1024)
+        msg = self.socket1.recv(1024)
         if msg == PLOT_CLOSED:
             self.action_menu.entryconfig("Open Evaluation Window", state="active")
         elif msg == KILL_PLOT:
@@ -135,21 +160,18 @@ class CtrlWindow(tk.Tk):
 
     def open_evaluation_window(self):
         self.action_menu.entryconfig("Open Evaluation Window", state="disabled")
-        self.socket.sendto(ACTIVATE_PLOT, (UDP_IP, PLOT_PORT))
-        self.socket.sendto(ACTIVATE_PLOT, (UDP_IP, POWER_PORT))
+        self.socket1.sendto(ACTIVATE_PLOT, (UDP_IP, PLOT_PORT))
+        self.socket1.sendto(ACTIVATE_PLOT, (UDP_IP, POWER_PORT))
         Thread(target=self.eval_win_open).start()
         
 
     def open_attack_panel(self):
-        # self.action_menu.entryconfig("Open Attack Window", state="disabled")
-        # if (self.attack_win == None) or (not self.attack_win.open): 
         bus_list = [str(list(range(int(self.number_of_buses)))[i]) for i in list(range(int(self.number_of_buses)))]
         self.attack_win = AttackWindow(bus_list)
         self.action_menu.entryconfig("Open Attack Window", state="disabled")
         self.attack_win.protocol("WM_DELETE_WINDOW", lambda: self.attack_win.on_closing(self.action_menu))            
 
     def open_defense_panel(self):
-        # self.action_menu.entryconfig("Open Defense Window", state="disabled")
         self.defense_win = DefenseWindow()
         self.action_menu.entryconfig("Open Defense Window", state="disabled")
         self.defense_win.protocol("WM_DELETE_WINDOW", lambda: self.defense_win.on_closing(self.action_menu))            
@@ -163,7 +185,7 @@ class CtrlWindow(tk.Tk):
         counter = 0
         print("Intializing modules...")
         while counter<2:
-            msg = self.socket.recv(1024) 
+            msg = self.socket1.recv(1024) 
             if (msg == POWERENGINE_READY):
                 print("Power Engine ready!")
                 counter += 1
@@ -173,13 +195,19 @@ class CtrlWindow(tk.Tk):
         self.show_page(CtrlPage1)
 
     def on_closing(self):
-        self.socket.sendto(KILL_SIM, (UDP_IP, POWER_PORT))
-        self.socket.sendto(KILL_PLOT, (UDP_IP, PLOT_PORT))
-        self.socket.sendto(KILL_PLOT, (UDP_IP, GUI_PORT))
+        self.socket1.sendto(KILL_SIM, (UDP_IP, POWER_PORT))
+        self.socket1.sendto(KILL_PLOT, (UDP_IP, PLOT_PORT))
+        self.socket1.sendto(KILL_PLOT, (UDP_IP, GUI_PORT1))
         if not (self.p == None):
             for p in self.p:
                 if p.is_alive():
                     p.kill()
+
+        if (not (self.export_win ==None)):
+            try:
+                self.export_win.destroy()
+            except tk.TclError:
+                pass
         
         
         if not (self.attack_win ==None):
@@ -205,12 +233,18 @@ class CtrlWindow(tk.Tk):
         self.action_menu.entryconfig("Open Evaluation Window", state="active")
         self.menubar.entryconfig("Window", state="disabled")
 
-        self.socket.sendto(RESET_SIM, (UDP_IP, POWER_PORT))
-        self.socket.sendto(RESET_PLOT, (UDP_IP, PLOT_PORT))
+        self.socket1.sendto(RESET_SIM, (UDP_IP, POWER_PORT))
+        self.socket1.sendto(RESET_PLOT, (UDP_IP, PLOT_PORT))
 
         for frame in self.frames.values():
             frame.destroy()
         self.frames = {}
+
+        if (not (self.export_win ==None)):
+            try:
+                self.export_win.destroy()
+            except tk.TclError:
+                pass
 
         if (not (self.attack_win ==None)):
             try:
@@ -222,7 +256,7 @@ class CtrlWindow(tk.Tk):
                 self.defense_win.destroy()
             except tk.TclError:
                 pass
-        for F in (CtrlPage1, CtrlPage2, CtrlPage3):
+        for F in (CtrlPage1, CtrlPage2, CtrlPage3, CtrlPage4):
             frame = F(self.container, self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
