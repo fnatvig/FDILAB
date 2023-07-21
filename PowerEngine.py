@@ -43,6 +43,7 @@ class PowerEngine:
         self.sim_queue, self.data_queue = Queue(), Queue()
         self.attack_queue, self.defense_queue = Queue(), Queue()
         self.plot_queue = Queue()
+        self.mse = []
 
         # Confirms that the PowerEngine object is initialized
         self.socket.sendto(POWERENGINE_READY, (UDP_IP, GUI_PORT1))
@@ -222,8 +223,10 @@ class PowerEngine:
                 fig.canvas.manager.set_window_title('Network Window')
                 plt.subplots_adjust(left=0.0, bottom=0.0, top=1.0, right=1.0)
                 pp.plotting.draw_collections([lc, bc, tc, eg], ax=ax)
-                ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, lc, bc, tc, eg, loadc, genc, load_prof_p, load_prof_q, base_values), frames =len(load_prof_p), interval=self.speed, cache_frame_data=False, repeat=repeat) 
+                self.n_iterations = len(load_prof_p)
+                ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, lc, bc, tc, eg, loadc, genc, load_prof_p, load_prof_q, base_values), frames =self.n_iterations, interval=self.speed, cache_frame_data=False, repeat=repeat) 
                 plt.show()
+
                 
     
     def get_measurements(self):
@@ -420,14 +423,17 @@ class PowerEngine:
             vm_pu_est = np.array(self.net.res_bus_est.iloc[:]['vm_pu'])
             vm_kv = np.array(self.net.res_bus.iloc[:]['vm_pu'])*np.array(bv[:])
             vm_kv_est = np.array(self.net.res_bus_est.iloc[:]['vm_pu'])*np.array(bv[:])
-            min = np.array(self.net.bus.iloc[:]['min_vm_pu'])*vm_pu
-            max = np.array(self.net.bus.iloc[:]['max_vm_pu'])*vm_pu
+            minimum = np.array(self.net.bus.iloc[:]['min_vm_pu'])*vm_pu
+            maximum = np.array(self.net.bus.iloc[:]['max_vm_pu'])*vm_pu
 
             
             try:
                 self.toggle_plot = self.plot_queue.get(False)
             except queue.Empty:
                 pass
+
+            mse = self.evaluate()
+            self.mse.append(float(mse))
 
             if self.toggle_plot:
                 plot_data = struct.pack("f", self.evaluate())
@@ -443,8 +449,8 @@ class PowerEngine:
             #     pass
             
 
-            vm_kvr, vm_kvb, busesr, busesb = self.alarm(buses, vm_pu, vm_kv, max, min)
-            vm_kvr_est, vm_kvb_est, busesr_est, busesb_est = self.alarm(buses, vm_pu_est, vm_kv_est, max, min)
+            vm_kvr, vm_kvb, busesr, busesb = self.alarm(buses, vm_pu, vm_kv, maximum, minimum)
+            vm_kvr_est, vm_kvb_est, busesr_est, busesb_est = self.alarm(buses, vm_pu_est, vm_kv_est, maximum, minimum)
 
             #  tuples of coordinates for drawing the values on the map
             coordsi = zip(self.net.bus_geodata.x.loc[buses].values-0.15, self.net.bus_geodata.y.loc[buses].values-0.15) 
@@ -472,6 +478,10 @@ class PowerEngine:
             plt.cla()
 
             pp.plotting.draw_collections(draw_list, ax=ax)
+
+            if i== self.n_iterations-1:
+                print("maximum MSE = ", max(self.mse))
+                print("total MSE = ", sum(self.mse))
 
     def evaluate(self):
         sum = 0
