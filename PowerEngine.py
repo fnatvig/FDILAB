@@ -107,12 +107,13 @@ class PowerEngine:
                 self.plot_queue.put(True)
             
             elif msg == ACTIVATE_DEFENSE:
+                print("Defense activated!")
                 self.defense_queue.put(True)
                 script = bytes.decode(self.socket.recv(1024), "utf-8")
-
                 self.defense_queue.put(script) 
             
             elif msg == DEACTIVATE_DEFENSE:
+                print("Defense deactivated!")
                 self.defense_queue.put(False)
 
             elif msg == SAVE_SIM:
@@ -450,6 +451,7 @@ class PowerEngine:
                     print("Attack detected (True Positive)")
                     self.tp +=1
                 else:
+                    print("Normal observation misclassified as attacked (False Positive)")
                     self.fp +=1
             else:
                 self.last_measurement = copy(self.net.measurement)
@@ -457,7 +459,7 @@ class PowerEngine:
                 if pre.df.iloc[0][pre.df.columns[-1]] == "no_attack":
                     self.tn +=1
                 else:
-                    print("An attack was undetected (False Negative)")
+                    print("An attack occured without being detected (False Negative)")
                     self.fn +=1
 
             est.estimate(self.net, calculate_voltage_angles=True, init="results")

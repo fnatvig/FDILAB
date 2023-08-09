@@ -41,7 +41,7 @@ class AttackBot:
             intensity = []
             m_type = []
             for i in range(len(bus_list)):
-                intensity.append(self.random.choice([0.995, 1.0, 1.005]))
+                intensity.append(self.random.choice([0.99, 1.0, 1.01]))
                 m_type.append(self.random.choice(['vm_pu','p_mw','q_mvar'])) 
 
             return intensity, m_type

@@ -48,13 +48,13 @@ class AutoEncoder(Model):
     data = pd.DataFrame(data)
     # plt.plot(data.iloc[:][data.columns[4]])
     # plt.show()
-    input = tf.random.normal((32,27))
-    output = self(input)
+    # input = tf.random.normal((32,27))
+    # output = self(input)
 
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=300, mode="min")
     opt = tf.keras.optimizers.Adam(learning_rate=0.0004)
     self.compile(optimizer=opt, loss="mse")
-    second_layer_weights = self.get_layer('sequential_1').get_weights()[0]
+    # second_layer_weights = self.get_layer('sequential_1').get_weights()[0]
     normal_train_data = data.iloc[0:int(len(data)*0.8)][data.columns[:]].reset_index(drop=True)
     normal_val_data = data.iloc[int(len(data)*0.8):][data.columns[:]].reset_index(drop=True)
     # tf.convert_to_tensor(normal_train_data)
@@ -126,16 +126,3 @@ def filter(model, raw_data):
     
 # model = AutoEncoder()
 # model.train()
-# print(model.threshold)
-
-# raw_data = pd.read_excel("data_exports/scenario2_attacked_9bus.xlsx")
-# df = raw_data.iloc[0:5][raw_data.columns[1:]]
-# pre = Preprocessor(pd.DataFrame())
-# data = pre.disassemble(df)
-# data = pd.DataFrame(data)
-# data = data.reset_index(drop=True)
-# model = tf.keras.models.load_model("scripts/detection_models/autoencoder_9bus.keras")
-# encoder_out = model.encoder(data.to_numpy())
-# decoder_out = model.decoder(encoder_out)
-# print(data)
-# print(decoder_out)
