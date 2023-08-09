@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import os
+import time 
 
 from constants import *
 
@@ -9,7 +10,8 @@ class DefensePage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        files = os.listdir('scripts')
+        files = [f for f in os.listdir('scripts') if os.path.isfile(os.path.join('scripts',f))]
+
         self.listbox = tk.Listbox(self)
         for file in files:
             self.listbox.insert(tk.END, file)
@@ -22,6 +24,9 @@ class DefensePage(tk.Frame):
     
     def activate_script(self):
         self.controller.socket.sendto(ACTIVATE_DEFENSE, (UDP_IP, POWER_PORT))
+        time.sleep(0.01)
+        script = self.listbox.get(tk.ACTIVE)
+        self.controller.socket.sendto(bytes(script, "utf-8"), (UDP_IP, POWER_PORT))
     
     def deactivate_script(self):
         self.controller.socket.sendto(DEACTIVATE_DEFENSE, (UDP_IP, POWER_PORT))
