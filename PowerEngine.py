@@ -229,7 +229,7 @@ class PowerEngine:
                 genc = pp.plotting.create_gen_collection(self.net, size=0.1, color="black", zorder=1, orientation=3.14159*2) 
                 sys.stdout = sys.__stdout__
                 n_ts =  500
-                volatility=0.01
+                volatility=0.02
                 load_prof_p, load_prof_q = None, None
                 repeat = True
                 if self.scenario_toggle:
@@ -313,8 +313,11 @@ class PowerEngine:
 
     # Adds fake measurement error to the power flow results (by multiplying with the different sigma:s)
     def add_noise(self, sigma_bus_v, sigma_bus_pq, sigma_line, sigma_trafo, seed=False):
-        if seed:
-            np.random.seed(1)
+        # if seed:
+        #     np.random.seed(1)
+        # else:
+        #     np.random.seed(1)
+        np.random.seed(1)
 
         bus_data = [np.array(self.net.res_bus.iloc[:]["vm_pu"]+np.random.normal(0,sigma_bus_v, len(self.net.res_bus.index))),
                     np.array(self.net.res_bus.iloc[:]["p_mw"]+np.random.normal(0,sigma_bus_pq, len(self.net.res_bus.index))),
@@ -338,24 +341,20 @@ class PowerEngine:
         return busDF, lineDF, trafoDF 
     
     # Used to create a random load profile (to make the simulation appear realistic over time)
-    def create_load_profile(self, n_ts=24, volatility=0.05, seed=False):
-        # if seed:
-            # np.random.seed(1)
-
+    def create_load_profile(self, n_ts, volatility):
         n = len(self.net.load.index)
-        lsf = np.zeros([n_ts,n])
-        lsf_values = np.zeros(n_ts)
+        load_profile = np.zeros([n_ts,n])
+        load_values = np.zeros(n_ts)
         for i in range(0,n_ts):
             new_value=volatility*np.random.rand()
             if np.random.rand() > 0.5:
-                lsf_values[i] = new_value
+                load_values[i] = new_value
             else:
-                lsf_values[i] = -new_value
+                load_values[i] = -new_value
 
         for i in range(n_ts):
-            lsf[i,:] = 1 + lsf_values[i]
-        
-        return lsf
+            load_profile[i,:] = 1 + load_values[i]
+        return load_profile
     
     # The main animation loop (running the power flow, measurement gathering, state estimation etc...)
     def animate(self, i, ax, lc, bc, tc, eg, loadc, genc, load_list_p, load_list_q, bv):
@@ -531,12 +530,14 @@ class PowerEngine:
             pp.plotting.draw_collections(draw_list, ax=ax)
 
             if self.time_iteration == self.n_iterations-1:
+                print("\n________SIMULATION_RESULTS________")
                 print("max MSE = ", max(self.mse))
                 print("total MSE = ", sum(self.mse))
                 if (self.tp+self.fp) != 0:
                     print("Precision = ", self.tp/(self.tp+self.fp))
                 if (self.tp+self.fn) != 0:
                     print("Recall = ", self.tp/(self.tp+self.fn))
+                print("\n")
                 if self.scenario_toggle:
 
                     return -1
