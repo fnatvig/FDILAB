@@ -7,8 +7,8 @@ The application is only tested with python version Python 3.10.10, although I be
 To use the autoencoder-based detection algorithm ("autoencoder_9bus.py"), you must also install "tensorflow" (https://www.tensorflow.org/)
 
 # Instructions
-1. Clone the repo, cd into it with git bash and run the command ``` git checkout stable ``` (to change to the stable branch). 
-2. Run the command: python -B main.py  
+1. Clone the repo, cd into it with git bash and run the command ``` git checkout dev ``` (to change to the development branch). 
+2. Run the command: ``` python -B main.py ```  
 3. Wait until the control panel window pops up
 4. ---TBD---
 
