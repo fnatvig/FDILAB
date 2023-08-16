@@ -1,4 +1,4 @@
-# FDIASIM (alternatively "GridSecurityLab" or "PowerSecurityLab")
+# FDIALAB (alternatively "PowerSecurityLab")
 A False Data Injection Attack (FDIA) Simulator (development branch)
 
 # Prerequisites
