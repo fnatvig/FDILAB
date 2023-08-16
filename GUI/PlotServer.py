@@ -13,7 +13,7 @@ class PlotServer:
         self.socket = socket(AF_INET, SOCK_DGRAM)
         self.socket.bind((UDP_IP, PLOT_PORT))
         self.plot_queue = Queue()
-        self.y, self.x = [], []
+        self.mse, self.mae, self.x = [], [], []
         self.flag = True
         self.time = 0
         self.socket.sendto(PLOTSERVER_READY, (UDP_IP, GUI_PORT1))
@@ -23,11 +23,13 @@ class PlotServer:
             y_new = self.plot_queue.get(False)
             if (y_new==0.0):
                     plt.close()
-            self.y.append(y_new)
+            self.mse.append(y_new[0])
+            # self.mae.append(y_new[1])
             self.x.append(self.time)
             self.time +=1
-            if self.flag or (len(self.y)>500):
-                del self.y[0]
+            if self.flag or (len(self.mse)>500):
+                del self.mse[0]
+                # del self.mae[0]
                 del self.x[0]
                 self.flag = False
 
@@ -35,10 +37,13 @@ class PlotServer:
             pass
 
         plt.clf()
-        plt.plot(self.x, self.y)
+        plt.plot(self.x, self.mse, label = "Mean Squared Error")
+        # plt.plot(self.x, self.mae, label = "Mean Absolute Error")
         # plt.legend()
         plt.xlabel('Time', fontsize=10)
-        plt.ylabel('Mean Squared Error', fontsize=10)
+        plt.ylabel("Mean Squared Error", fontsize=10)
+        # plt.ylabel("Error", fontsize=10)
+        # plt.ylabel('Mean Squared Error', fontsize=10)
         plt.tight_layout()
 
     def wait_for_activation(self):
@@ -78,7 +83,7 @@ class PlotServer:
                         is_running = False
                         break
                     else:
-                        unpack = struct.unpack("f", data)
+                        unpack = struct.unpack("f f", data)
                         self.plot_queue.put(unpack)
                 except socket.error:
                     pass

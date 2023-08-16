@@ -482,11 +482,11 @@ class PowerEngine:
             except queue.Empty:
                 pass
 
-            mse = self.evaluate()
+            mse, mae = self.evaluate()
             self.mse.append(float(mse))
 
             if self.toggle_plot:
-                plot_data = struct.pack("f", self.evaluate())
+                plot_data = struct.pack("f f", mse, mae)
                 self.socket.sendto(plot_data, (UDP_IP, PLOT_PORT))
 
             # try:
@@ -531,8 +531,8 @@ class PowerEngine:
 
             if self.time_iteration == self.n_iterations-1:
                 print("\n________SIMULATION_RESULTS________")
-                print("max MSE = ", max(self.mse))
                 print("total MSE = ", sum(self.mse))
+                print("max MSE = ", max(self.mse))
                 if (self.tp+self.fp) != 0:
                     print("Precision = ", self.tp/(self.tp+self.fp))
                 if (self.tp+self.fn) != 0:
@@ -545,10 +545,14 @@ class PowerEngine:
         
 
     def evaluate(self):
-        sum = 0
+        sum_mse = 0
+        sum_mae = 0
         for i in range(len(self.net.bus.index)):
-            sum += (self.net.res_bus.iloc[i]['vm_pu']-self.net.res_bus_est.iloc[i]['vm_pu'])*(self.net.res_bus.iloc[i]['vm_pu']-self.net.res_bus_est.iloc[i]['vm_pu'])
-        return sum/len(self.net.bus.index)
+            sum_mse += (self.net.res_bus.iloc[i]['vm_pu']-self.net.res_bus_est.iloc[i]['vm_pu'])*(self.net.res_bus.iloc[i]['vm_pu']-self.net.res_bus_est.iloc[i]['vm_pu'])
+            sum_mae += abs(self.net.res_bus.iloc[i]['vm_pu']-self.net.res_bus_est.iloc[i]['vm_pu'])
+
+        
+        return sum_mse/len(self.net.bus.index), sum_mae/len(self.net.bus.index)
     # Used to highlight the estimates with a value outside of the acceptable limits 
     def alarm(self, buses, vm_pu, vm_kv, max_pu, min_pu):
 
