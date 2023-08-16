@@ -45,7 +45,7 @@ class Preprocessor:
     def sort(self):
         t, m = 0, 0
         t_end = self.raw_df.iloc[-1]["time"]
-        while t < t_end:
+        while t <= t_end:
             net_data=[]
             for i in range(self.bus_cardinality):
                 bus_data = []

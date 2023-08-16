@@ -121,6 +121,7 @@ class PowerEngine:
                 size = self.data_queue.qsize()
                 self.df = pd.DataFrame(columns=["time", "bus", "V", "P", "Q", "label"])
                 for i in range(size):
+
                     print(f"Exporting simulation... {i}/{size-1}", end="\r")
                     self.df.loc[len(self.df)] = self.data_queue.get()
                 preprocessor = Preprocessor(self.df)
@@ -203,7 +204,7 @@ class PowerEngine:
 
     def gen(self):
         i = 0
-        while (self.time_iteration < self.n_iterations) or (not self.scenario_toggle):
+        while (self.time_iteration < self.n_iterations):
             i += 1
             yield i
         print("Simulation finished.")
@@ -370,7 +371,7 @@ class PowerEngine:
 
             # if self.attackbot.active:
             #     self.attackbot.main([str(list(range(len(self.net.bus)))[i]) for i in list(range(len(self.net.bus)))])
-
+            # print("t = ", self.time_iteration)
             draw_list = [lc, bc, tc, eg, loadc, genc]
             self.net.load.loc[:, "p_mw"] *= load_list_p[self.time_iteration][:] 
             self.net.load.loc[:, "q_mvar"] *= load_list_q[self.time_iteration][:] 
@@ -435,10 +436,8 @@ class PowerEngine:
             except queue.Empty:
                 pass
 
-                
-
             verdict = self.defense.filter(pre.df)
-            
+
             if verdict == "attack":
                 
                 if (self.time_iteration == 0) and (self.defense.active == True):                    
@@ -446,7 +445,7 @@ class PowerEngine:
                 else:
                     self.net.measurement = copy(self.last_measurement)
 
-                if pre.df.iloc[0][pre.df.columns[-1]] == verdict:
+                if verdict == pre.df.iloc[0]["label"]:
                     print("Attack detected (True Positive)")
                     self.tp +=1
                 else:
@@ -455,7 +454,7 @@ class PowerEngine:
             else:
                 self.last_measurement = copy(self.net.measurement)
                 
-                if pre.df.iloc[0][pre.df.columns[-1]] == "no_attack":
+                if verdict == pre.df.iloc[0]["label"]:
                     self.tn +=1
                 else:
                     print("An attack occured without being detected (False Negative)")
@@ -529,7 +528,7 @@ class PowerEngine:
 
             pp.plotting.draw_collections(draw_list, ax=ax)
 
-            if self.time_iteration == self.n_iterations-1:
+            if self.time_iteration == self.n_iterations:
                 print("\n________SIMULATION_RESULTS________")
                 print("total MSE = ", sum(self.mse))
                 print("max MSE = ", max(self.mse))

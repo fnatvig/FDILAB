@@ -111,7 +111,7 @@ def filter(model, raw_data):
       # print("attack detected!")
       return "attack"
   else: 
-      return "no attack"
+      return "no_attack"
 
   
   # if raw_data.iloc[0]["label"] == "attack":

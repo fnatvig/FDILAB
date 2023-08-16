@@ -24,7 +24,7 @@ class Scenario:
             volatility=0.02
             load_profile = np.zeros([n_ts,n])
             load_values = np.zeros(n_ts)
-            for i in range(0,n_ts):
+            for i in range(n_ts):
                 new_value=volatility*np.random.rand()
                 if np.random.rand() > 0.5:
                     load_values[i] = new_value
@@ -41,7 +41,7 @@ class Scenario:
             volatility=0.02
             load_profile = np.zeros([n_ts,n])
             load_values = np.zeros(n_ts)
-            for i in range(0,n_ts):
+            for i in range(n_ts):
                 new_value=volatility*np.random.rand()
                 if np.random.rand() > 0.5:
                     load_values[i] = new_value
