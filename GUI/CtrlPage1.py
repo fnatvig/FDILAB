@@ -9,8 +9,7 @@ class CtrlPage1(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
 
-
-        button1 = tk.Button(self, text="Load case 14", command=lambda: self.send_msg(LOAD14))
+        button1 = tk.Button(self, text="Load case 30", command=lambda: self.send_msg(LOAD30))
         button1.pack(expand=True, fill=tk.BOTH, side = tk.LEFT, padx=5, pady=self.controller.height/3)
         button2 = tk.Button(self, text="Load case 9", command=lambda: self.send_msg(LOAD9))
         button2.pack(expand=True, fill=tk.BOTH, side = tk.RIGHT, padx=5, pady=self.controller.height/3)
@@ -28,8 +27,8 @@ class CtrlPage1(tk.Frame):
         self.controller.sim_menu.entryconfig("Stop Simulation", state="active")
         self.controller.menubar.entryconfig("Window", state="active")
 
-        if msg == LOAD14:
-            self.controller.number_of_buses = 14
+        if msg == LOAD30:
+            self.controller.number_of_buses = 30
         elif msg == LOAD9:
             self.controller.number_of_buses = 9
 

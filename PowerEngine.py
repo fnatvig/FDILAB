@@ -61,8 +61,8 @@ class PowerEngine:
 
         # Wait for user to choose a test case
         msg = self.socket.recv(1024)
-        if msg == LOAD14:        
-            self.net = nw.case14()
+        if msg == LOAD30:        
+            self.net = nw.case30()
         elif msg == LOAD9:        
             self.net = nw.case9()        
         if not self.net == None:
@@ -228,6 +228,8 @@ class PowerEngine:
                 loadc = pp.plotting.create_load_collection(self.net, color="black", zorder=1, size=0.1) 
                 tc = pp.plotting.create_trafo_collection(self.net, color="black", size=0.05, zorder=1)
                 genc = pp.plotting.create_gen_collection(self.net, size=0.1, color="black", zorder=1, orientation=3.14159*2) 
+                brc = pp.plotting.create_bus_bus_switch_collection(self.net, size=0.05)
+
                 sys.stdout = sys.__stdout__
                 n_ts =  500
                 volatility=0.02
@@ -246,7 +248,11 @@ class PowerEngine:
                 plt.subplots_adjust(left=0.0, bottom=0.0, top=1.0, right=1.0)
                 pp.plotting.draw_collections([lc, bc, tc, eg], ax=ax)
                 self.n_iterations = len(load_prof_p)
-                ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, lc, bc, tc, eg, loadc, genc, load_prof_p, load_prof_q, base_values), frames =self.gen, interval=self.speed, save_count=500, cache_frame_data=True, repeat=False) 
+                # self.net.line.drop(4, inplace=True)
+                # self.net.line.reset_index(inplace=True)
+
+                # print(self.net.line)
+                ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, lc, bc, tc, eg, loadc, genc, brc, load_prof_p, load_prof_q, base_values), frames =self.gen, interval=self.speed, save_count=500, cache_frame_data=True, repeat=False) 
                 plt.show()
 
                 
@@ -358,7 +364,7 @@ class PowerEngine:
         return load_profile
     
     # The main animation loop (running the power flow, measurement gathering, state estimation etc...)
-    def animate(self, i, ax, lc, bc, tc, eg, loadc, genc, load_list_p, load_list_q, bv):
+    def animate(self, i, ax, lc, bc, tc, eg, loadc, genc, brc, load_list_p, load_list_q, bv):
         try:
             # self.update_animation = self.anim_queue.get(False)
             self.update_animation = self.sim_queue.get(False)
@@ -372,11 +378,29 @@ class PowerEngine:
             # if self.attackbot.active:
             #     self.attackbot.main([str(list(range(len(self.net.bus)))[i]) for i in list(range(len(self.net.bus)))])
             # print("t = ", self.time_iteration)
-            draw_list = [lc, bc, tc, eg, loadc, genc]
+            if self.time_iteration > 20:
+                self.net.line.in_service.at[5] = False
+
+        
+            if self.time_iteration < 23:
+                if self.time_iteration > 17:
+                    print("t = ", self.time_iteration)
+                    print(self.net.res_line.iloc[5][self.net.res_line.columns[:]])
+                    print(self.net.res_line_est.iloc[5][self.net.res_line.columns[:]])
+
+            lines_in_service = []
+            for i in range(len(self.net.line.index)):
+                if self.net.line.iloc[i]["in_service"] == True:
+                    lines_in_service.append(self.net.line.index[i])
+            
+            lc = pp.plotting.create_line_collection(self.net, lines=lines_in_service, color="black", zorder=1, use_bus_geodata=True)
+
+            draw_list = [lc, bc, tc, eg, loadc, genc, brc]
             self.net.load.loc[:, "p_mw"] *= load_list_p[self.time_iteration][:] 
             self.net.load.loc[:, "q_mvar"] *= load_list_q[self.time_iteration][:] 
             if len(self.net.bus.index)<14:
                 del draw_list[2]
+
             pp.plotting.draw_collections(draw_list, ax=ax)
             
             pp.runpp(self.net, run_control=True, max_iteration=50, calculate_voltage_angles=True, init="results")

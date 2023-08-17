@@ -8,10 +8,11 @@ from GUI.AttackPage import *
 class AttackWindow(tk.Tk):
     def __init__(self, bus_list):
         tk.Tk.__init__(self)
-        ws = self.winfo_screenwidth() # width of the screen
-        hs = self.winfo_screenheight()
+        self.ws = self.winfo_screenwidth() # width of the screen
+        self.hs = self.winfo_screenheight()
         self.title("Attack Window")
-        self.geometry(f"+{int(ws/2)}+{int(hs/9)}")
+        # self.geometry(f"{int(self.ws*0.3)}x{int(self.hs*0.8)}+{int(self.ws/2)}+{int(self.hs/9)}")
+        # self.geometry(f"{int(self.ws*0.2)}x{int(self.hs*0.8)}")
         self.container = tk.Frame(self)
         self.container.pack()
         self.bus_list = bus_list
