@@ -51,7 +51,7 @@ class AutoEncoder(Model):
     # input = tf.random.normal((32,27))
     # output = self(input)
 
-    early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=300, mode="min")
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=30, mode="min")
     opt = tf.keras.optimizers.Adam(learning_rate=0.0004)
     self.compile(optimizer=opt, loss="mse")
     # second_layer_weights = self.get_layer('sequential_1').get_weights()[0]
@@ -78,19 +78,19 @@ class AutoEncoder(Model):
       mse = (np.square(real_data - decoder_out[i])).mean(axis=0)
       if mse>max_mse:
         max_mse = mse 
-    print("max_mse = ", max_mse)
-    with open("scripts/detection_models/autoencoder_9bus_threshold.txt", "w") as f:
-      print(str(max_mse), file=f)
+    # print("max_mse = ", max_mse)
+    # with open("scripts/detection_models/autoencoder_9bus_threshold.txt", "w") as f:
+    #   print(str(max_mse), file=f)
     
-    with open("scripts/detection_models/autoencoder_9bus_max.txt", "w") as f:
-      for value in max_arr:
-        print(value, file=f)
+    # with open("scripts/detection_models/autoencoder_9bus_max.txt", "w") as f:
+    #   for value in max_arr:
+    #     print(value, file=f)
 
-    with open("scripts/detection_models/autoencoder_9bus_min.txt", "w") as f:
-      for value in min_arr:
-        print(value, file=f)
+    # with open("scripts/detection_models/autoencoder_9bus_min.txt", "w") as f:
+    #   for value in min_arr:
+    #     print(value, file=f)
 
-    self.save('scripts/detection_models/autoencoder_9bus.keras')
+    # self.save('scripts/detection_models/autoencoder_9bus.keras')
 
 
 def filter(model, raw_data):

@@ -122,7 +122,7 @@ class PowerEngine:
                 self.df = pd.DataFrame(columns=["time", "bus", "V", "P", "Q", "label"])
                 for i in range(size):
 
-                    print(f"Exporting simulation... {i}/{size-1}", end="\r")
+                    print(f"Exporting simulation... {i}/{size}", end="\r")
                     self.df.loc[len(self.df)] = self.data_queue.get()
                 preprocessor = Preprocessor(self.df)
                 preprocessor.sort()
