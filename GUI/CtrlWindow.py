@@ -11,6 +11,8 @@ from GUI.CtrlPage3 import *
 from GUI.CtrlPage4 import *
 from GUI.AttackWindow import *
 from GUI.ExportWindow import *
+from GUI.GridModWindow import *
+
 # from GUI.PlotServer import *
 
 class CtrlWindow(tk.Tk):
@@ -33,6 +35,7 @@ class CtrlWindow(tk.Tk):
         self.attack_win =None
         self.defense_win =None
         self.export_win =None
+        self.mod_win = None
         self.eval_win = None
         self.scenario = False
         self.reset=True
@@ -107,6 +110,9 @@ class CtrlWindow(tk.Tk):
         self.action_menu.add_command(
         label='Open Defense Window',
         command=lambda: self.open_defense_panel())
+        self.action_menu.add_command(
+        label='Modify Grid',
+        command=lambda: self.open_grid_modifier())
 
         self.menubar.add_cascade(
             label="Window",
@@ -136,12 +142,6 @@ class CtrlWindow(tk.Tk):
             self.show_page(CtrlPage4)
         elif msg == EXPORT_CLOSED:
             self.export_menu.entryconfig("as .xlsx", state="active")
-
-    #         elif msg == PLOT_CLOSED:
-    #             self.action_menu.entryconfig("Open Evaluation Window", state="active")
-
-    #         elif msg == KILL_GUI:
-    #             break
 
 
     def export_sim(self, msg):
@@ -175,6 +175,12 @@ class CtrlWindow(tk.Tk):
         self.defense_win = DefenseWindow()
         self.action_menu.entryconfig("Open Defense Window", state="disabled")
         self.defense_win.protocol("WM_DELETE_WINDOW", lambda: self.defense_win.on_closing(self.action_menu))            
+
+    def open_grid_modifier(self):
+        line_list = [str(list(range(int(self.number_of_lines)))[i]) for i in list(range(int(self.number_of_lines)))]
+        self.mod_win = GridModWindow(line_list)
+        self.action_menu.entryconfig("Modify Grid", state="disabled")
+        self.mod_win.protocol("WM_DELETE_WINDOW", lambda: self.mod_win.on_closing(self.action_menu))            
 
 
     def show_page(self, cont):
@@ -221,6 +227,11 @@ class CtrlWindow(tk.Tk):
                 self.defense_win.destroy()
             except tk.TclError:
                 pass
+        if not (self.mod_win ==None):
+            try:
+                self.mod_win.destroy()
+            except tk.TclError:
+                pass
         self.running = False
         self.destroy()
 
@@ -231,6 +242,7 @@ class CtrlWindow(tk.Tk):
         self.action_menu.entryconfig("Open Defense Window", state="active")
         self.action_menu.entryconfig("Open Attack Window", state="active")
         self.action_menu.entryconfig("Open Evaluation Window", state="active")
+        self.action_menu.entryconfig("Modify Grid", state="active")
         self.menubar.entryconfig("Window", state="disabled")
 
         self.socket1.sendto(RESET_SIM, (UDP_IP, POWER_PORT))
@@ -254,6 +266,11 @@ class CtrlWindow(tk.Tk):
         if not (self.defense_win ==None):
             try:
                 self.defense_win.destroy()
+            except tk.TclError:
+                pass
+        if not (self.mod_win ==None):
+            try:
+                self.mod_win.destroy()
             except tk.TclError:
                 pass
         for F in (CtrlPage1, CtrlPage2, CtrlPage3, CtrlPage4):

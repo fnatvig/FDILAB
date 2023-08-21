@@ -382,11 +382,11 @@ class PowerEngine:
                 self.net.line.in_service.at[5] = False
 
         
-            if self.time_iteration < 23:
-                if self.time_iteration > 17:
-                    print("t = ", self.time_iteration)
-                    print(self.net.res_line.iloc[5][self.net.res_line.columns[:]])
-                    print(self.net.res_line_est.iloc[5][self.net.res_line.columns[:]])
+            # if self.time_iteration < 23:
+            #     if self.time_iteration > 17:
+            #         print("t = ", self.time_iteration)
+            #         print(self.net.res_line.iloc[5][self.net.res_line.columns[:]])
+            #         print(self.net.res_line_est.iloc[5][self.net.res_line.columns[:]])
 
             lines_in_service = []
             for i in range(len(self.net.line.index)):
@@ -531,6 +531,25 @@ class PowerEngine:
             coords_b = zip(self.net.bus_geodata.x.loc[busesb].values-0.3, self.net.bus_geodata.y.loc[busesb].values+0.05)
             coords_r_e = zip(self.net.bus_geodata.x.loc[busesr_est].values-0.3, self.net.bus_geodata.y.loc[busesr_est].values+0.18)
             coords_b_e = zip(self.net.bus_geodata.x.loc[busesb_est].values-0.3, self.net.bus_geodata.y.loc[busesb_est].values+0.18)
+            
+            lines_geodata_x = []
+            lines_geodata_y = []
+            for line in self.net.line.index.tolist():
+                from_bus = self.net.line.iloc[line]["from_bus"]
+                from_bus_x = self.net.bus_geodata.x.loc[from_bus]
+                from_bus_y = self.net.bus_geodata.y.loc[from_bus]
+                to_bus = self.net.line.iloc[line]["to_bus"]
+                to_bus_x = self.net.bus_geodata.x.loc[to_bus]
+                to_bus_y = self.net.bus_geodata.y.loc[to_bus]
+
+                lines_geodata_x.append(from_bus_x+(to_bus_x-from_bus_x)/2)
+                lines_geodata_y.append(from_bus_y+(to_bus_y-from_bus_y)/2)
+
+            coords_lines = zip(lines_geodata_x, lines_geodata_y)
+            lines_idx = pp.plotting.create_annotation_collection(size=0.13, texts=np.char.mod('%d', self.net.line.index.tolist()), coords=coords_lines, zorder=3, color="black")
+
+            # print(self.net.line)
+            # print(len(self.net.line.index))
             bic_idx = pp.plotting.create_annotation_collection(size=0.13, texts=np.char.mod('%d', buses), coords=coordsi, zorder=3, color="blue")
             draw_list.append(bic_idx)
             if not len(vm_kvr)==0:
@@ -545,6 +564,8 @@ class PowerEngine:
             if not len(vm_kvb_est)==0: 
                 bic_b_est = pp.plotting.create_annotation_collection(size=0.13, texts=np.char.add(np.char.mod('%.4f', vm_kvb_est), ' kV'), coords=coords_b_e, zorder=3, color="limegreen")
                 draw_list.append(bic_b_est)
+
+            draw_list.append(lines_idx)
 
             self.time_iteration +=1 
 

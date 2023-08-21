@@ -7,9 +7,9 @@ class ExportWindow(tk.Tk):
     def __init__(self, file_format):
         tk.Tk.__init__(self)
         self.title("Export Window")
-        ws = self.winfo_screenwidth() # width of the screen
-        hs = self.winfo_screenheight()
-        self.geometry("250x50")
+        self.ws = 250 # width of the screen
+        self.hs = 50
+        self.geometry(f"{self.ws}x{self.hs}")
         self.container = tk.Frame(self)
         self.container.pack()
         self.socket = socket(AF_INET, SOCK_DGRAM)

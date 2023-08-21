@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 import time
 
 from constants import *
@@ -7,6 +8,21 @@ class ExportPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+
+        # main_frame = tk.Frame(self.controller, height=int(self.controller.hs*0.7))
+        # main_frame.pack(fill=tk.BOTH, expand=1)
+
+        # my_canvas = tk.Canvas(main_frame, height=int(self.controller.hs*0.7))
+        # my_canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+        # my_scrollbar = ttk.Scrollbar(main_frame, orient=tk.HORIZONTAL, command=my_canvas.xview)
+        # my_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+
+        # my_canvas.configure(yscrollcommand=my_scrollbar.set)
+        # my_canvas.bind('<Configure>', lambda e: my_canvas.configure(scrollregion=my_canvas.bbox("all")))
+
+        # second_frame = tk.Frame(my_canvas, height=int(self.controller.hs*0.7))
+        # my_canvas.create_window((0,0), height=int(self.controller.hs*0.7), window=second_frame, anchor="nw")
 
         label = tk.Label(self, text="Save as...")
         label.grid(row=0, column=0)

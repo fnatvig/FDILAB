@@ -29,8 +29,10 @@ class CtrlPage1(tk.Frame):
 
         if msg == LOAD30:
             self.controller.number_of_buses = 30
+            self.controller.number_of_lines = 41
         elif msg == LOAD9:
             self.controller.number_of_buses = 9
+            self.controller.number_of_lines = 9
 
         self.controller.show_page(CtrlPage2)
 

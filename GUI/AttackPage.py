@@ -57,7 +57,7 @@ class AttackPage(tk.Frame):
         self.button2 = tk.Button(second_frame, text="Undo Attack", command=lambda: self.undo_attack())
         self.button2.grid(row=len(self.controller.bus_list)+1, column=0, columnspan=3, sticky='e'+'w')
         # self.my_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
-        self.controller.geometry(f"{int(self.controller.ws*0.2)}x{int(self.controller.hs*0.8)}+{int(self.controller.ws/2)}+{int(self.controller.hs/9)}")
+        # self.controller.geometry(f"{int(self.controller.ws*0.2)}x{int(self.controller.hs*0.8)}+{int(self.controller.ws/2)}+{int(self.controller.hs/9)}")
         
     def get_back(self):
         self.controller.reset_win()
