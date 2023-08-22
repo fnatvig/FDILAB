@@ -1,13 +1,15 @@
-# Import tkinter library
 from tkinter import *
-# Create an instance of tkinter frame
-win = Tk()
-# Set the Geometry
-def print_width():
-   print("The width of Tkinter window:", win.winfo_width())
-   print("The height of Tkinter window:", win.winfo_height())
-# Create a Label
-Label(win, text="Click the below Button to Print the Height and width of the Screen", font=('Helvetica 10 bold')).pack(pady=20)
-# Create a Button for print function
-Button(win, text="Click", command=print_width).pack(pady=10)
-win.mainloop()
+ 
+def click_me():
+    print(i.get())
+ 
+root =Tk()
+i=IntVar()
+c = Checkbutton(root, text = "Python", variable=i)
+c.pack()
+ 
+b = Button(root,text="Click here",command=click_me)
+b.pack()
+ 
+root.geometry("400x400+120+120")
+root.mainloop()

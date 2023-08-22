@@ -16,6 +16,9 @@ class GridModWindow(tk.Tk):
         self.container = tk.Frame(self)
         self.container.pack()
         self.line_list = line_list
+        self.vars = []
+        for i in range(len(line_list)):
+            self.vars.append(tk.IntVar())
         self.socket = socket(AF_INET, SOCK_DGRAM)
         self.frames = {}
         frame = GridModPage(self.container, self)
