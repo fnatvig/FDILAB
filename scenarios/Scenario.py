@@ -7,10 +7,12 @@ class Scenario:
     def __init__(self, nr):
         self.scenario_nr = nr
         if (self.scenario_nr == SCENARIO1_UNATTACKED or 
-            self.scenario_nr == SCENARIO1_ATTACKED):
+            self.scenario_nr == SCENARIO1_ATTACKED or
+            self.scenario_nr == SCENARIO1_MOD_ATTACKED):
             np.random.seed(1)
         elif (self.scenario_nr == SCENARIO2_UNATTACKED or 
-            self.scenario_nr == SCENARIO2_ATTACKED):
+            self.scenario_nr == SCENARIO2_ATTACKED or
+            self.scenario_nr == SCENARIO2_MOD_ATTACKED):
             np.random.seed(2)
 
         # np.random.RandomState(1)
@@ -19,7 +21,8 @@ class Scenario:
     def create_load_profile(self, net):
         n = len(net.load.index)
         if (self.scenario_nr == SCENARIO1_UNATTACKED or 
-            self.scenario_nr == SCENARIO1_ATTACKED):
+            self.scenario_nr == SCENARIO1_ATTACKED or 
+            self.scenario_nr == SCENARIO1_MOD_ATTACKED):
             n_ts=100 
             volatility=0.02
             load_profile = np.zeros([n_ts,n])
@@ -36,7 +39,8 @@ class Scenario:
             return load_profile
         
         elif (self.scenario_nr == SCENARIO2_UNATTACKED or 
-            self.scenario_nr == SCENARIO2_ATTACKED):
+            self.scenario_nr == SCENARIO2_ATTACKED or 
+            self.scenario_nr == SCENARIO2_MOD_ATTACKED):
             n_ts=500 
             volatility=0.02
             load_profile = np.zeros([n_ts,n])

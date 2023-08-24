@@ -22,6 +22,7 @@ from Defense import *
 # from scripts.perfect_classifier import *
 from scenarios.Scenario import *
 from scenarios.AttackBot import *
+from scenarios.ModBot import *
 
 
 class PowerEngine:
@@ -40,14 +41,17 @@ class PowerEngine:
         self.update_animation  = True
         self.last_measurement = None
         self.scenario_toggle = False
+        self.line_status = []
         self.scenario = None
         self.speed = 50
         self.attackbot = AttackBot()
+        self.modbot = ModBot()
         self.defense = Defense()
         self.last_attack = FDIA(active=False)
         self.sim_queue, self.data_queue = Queue(), Queue()
         self.attack_queue, self.defense_queue = Queue(), Queue()
         self.plot_queue = Queue()
+        self.grid_queue = Queue()
         self.tp = 0
         self.fp = 0
         self.tn = 0
@@ -60,20 +64,20 @@ class PowerEngine:
     def main(self):
 
         # Wait for user to choose a test case
-        msg = self.socket.recv(1024)
+        msg = self.socket.recv(128)
         if msg == LOAD30:        
             self.net = nw.case30()
         elif msg == LOAD9:        
             self.net = nw.case9()        
         if not self.net == None:
             print("Test case loaded!")
-
         sim_process = Process(target=self.sim)
         sim_started = False
         buses, m_types, intensities = [], [], []
+        lines, active = [], []
         while True:
 
-            msg = self.socket.recv(1024)
+            msg = self.socket.recv(128)
 
             if msg == START_SIM:
                 if not sim_started:
@@ -83,10 +87,12 @@ class PowerEngine:
             
             elif (msg == LOAD_SCENARIO) and (not sim_started):
                 self.scenario_toggle = True
-                nr = self.socket.recv(1024)
+                nr = self.socket.recv(128)
                 self.scenario = Scenario(nr)
                 self.attackbot.scenario = nr
                 self.attackbot.set_active()
+                self.modbot.scenario = nr
+                self.modbot.set_active()
                 sim_process.start() 
                 sim_started = True
                 self.sim_queue.put(True)   
@@ -109,7 +115,7 @@ class PowerEngine:
             elif msg == ACTIVATE_DEFENSE:
                 print("Defense activated!")
                 self.defense_queue.put(True)
-                script = bytes.decode(self.socket.recv(1024), "utf-8")
+                script = bytes.decode(self.socket.recv(128), "utf-8")
                 self.defense_queue.put(script) 
             
             elif msg == DEACTIVATE_DEFENSE:
@@ -177,6 +183,20 @@ class PowerEngine:
                     buses, m_types, intensities = [], [], []
                     # print(attack)
                     self.attack_queue.put(attack)
+
+            elif unpacked[0] == MOD_GRID:
+                line, status = struct.unpack('i i ? 7x', msg)[1:]
+                lines.append(line)
+                active.append(status)
+
+            elif unpacked[0] == LAST_MOD_GRID:
+                line, status = struct.unpack('i i ? 7x', msg)[1:]
+                lines.append(line)
+                active.append(status)
+                if len(lines) == len(self.net.line.index):
+                    self.grid_queue.put(active)
+                    lines, active = [], []
+
     def reset(self):
         self.time_iteration = 0
         self.df = None
@@ -185,15 +205,18 @@ class PowerEngine:
         self.toggle_defense = False
         self.update_animation  = True
         self.last_measurement = None
+        self.line_status = []
         self.scenario_toggle = False
         self.scenario = None
         self.speed = 50
         self.attackbot = AttackBot()
+        self.modbot = ModBot()
         self.defense = Defense()
         self.last_attack = FDIA(active=False)
         self.sim_queue, self.data_queue = Queue(), Queue()
         self.attack_queue, self.defense_queue = Queue(), Queue()
         self.plot_queue = Queue()
+        self.grid_queue = Queue()
         self.tp = 0
         self.fp = 0
         self.tn = 0
@@ -222,14 +245,18 @@ class PowerEngine:
                 est.estimate(self.net, calculate_voltage_angles=True, init="flat")
 
                 sys.stdout = open(os.devnull, 'w')
-                lc = pp.plotting.create_line_collection(self.net, color="black", zorder=1, use_bus_geodata=True)
+                lines_in_service = []
+                for i in range(len(self.net.line.index)):
+                    if self.net.line.iloc[i]["in_service"] == True:
+                        lines_in_service.append(self.net.line.index[i])
+                lc = pp.plotting.create_line_collection(self.net, lines=lines_in_service, color="black", zorder=1, use_bus_geodata=True)
                 bc = pp.plotting.create_bus_collection(self.net, self.net.bus.index, size=0.03, color="b", zorder=2)
                 eg = pp.plotting.create_ext_grid_collection(self.net, color="black", size=0.1, zorder=1, orientation=3.14159) 
                 loadc = pp.plotting.create_load_collection(self.net, color="black", zorder=1, size=0.1) 
-                tc = pp.plotting.create_trafo_collection(self.net, color="black", size=0.05, zorder=1)
+                # tc = pp.plotting.create_trafo_collection(self.net, color="black", size=0.05, zorder=1)
                 genc = pp.plotting.create_gen_collection(self.net, size=0.1, color="black", zorder=1, orientation=3.14159*2) 
                 brc = pp.plotting.create_bus_bus_switch_collection(self.net, size=0.05)
-
+                self.line_status = len(self.net.line.index)*[True]
                 sys.stdout = sys.__stdout__
                 n_ts =  500
                 volatility=0.02
@@ -243,16 +270,17 @@ class PowerEngine:
                     load_prof_q = self.create_load_profile(n_ts, volatility)
                     self.n_iterations = n_ts
                 self.update_animation = True
+
                 fig, ax = plt.subplots(figsize=(6, 6))
                 fig.canvas.manager.set_window_title('Network Window')
                 plt.subplots_adjust(left=0.0, bottom=0.0, top=1.0, right=1.0)
-                pp.plotting.draw_collections([lc, bc, tc, eg], ax=ax)
+                pp.plotting.draw_collections([lc, bc, eg], ax=ax)
                 self.n_iterations = len(load_prof_p)
                 # self.net.line.drop(4, inplace=True)
                 # self.net.line.reset_index(inplace=True)
 
                 # print(self.net.line)
-                ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, lc, bc, tc, eg, loadc, genc, brc, load_prof_p, load_prof_q, base_values), frames =self.gen, interval=self.speed, save_count=500, cache_frame_data=True, repeat=False) 
+                ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, bc, lc, eg, loadc, genc, brc, load_prof_p, load_prof_q, base_values), frames =self.gen, interval=self.speed, save_count=500, cache_frame_data=True, repeat=False) 
                 plt.show()
 
                 
@@ -267,7 +295,7 @@ class PowerEngine:
         if self.scenario_toggle:
             if self.time_iteration > 0:
                 if self.attackbot.active:
-                    intensities, m_types = self.attackbot.main(list(range(len(self.net.bus))))
+                    intensities, m_types = self.attackbot.main(self.net.bus.index)
                     attack = FDIA(True, "bus", list(range(len(self.net.bus))), m_types, 1, intensities)
                     attack.fill_attack_vector(self.net)
                     bus_data, line_data, trafo_data = attack.execute_attack(bus_data, line_data, trafo_data)
@@ -364,7 +392,7 @@ class PowerEngine:
         return load_profile
     
     # The main animation loop (running the power flow, measurement gathering, state estimation etc...)
-    def animate(self, i, ax, lc, bc, tc, eg, loadc, genc, brc, load_list_p, load_list_q, bv):
+    def animate(self, i, ax, bc, lc, eg, loadc, genc, brc, load_list_p, load_list_q, bv):
         try:
             # self.update_animation = self.anim_queue.get(False)
             self.update_animation = self.sim_queue.get(False)
@@ -373,13 +401,18 @@ class PowerEngine:
 
         if self.update_animation:
 
-                
+            if self.scenario_toggle:
+                if self.time_iteration > 0:
+                    if self.modbot.active:
+                        self.line_status = self.modbot.main(self.net.line.index)
+            try:
+                self.line_status = self.grid_queue.get(False)
+            except queue.Empty:
+                pass
 
-            # if self.attackbot.active:
-            #     self.attackbot.main([str(list(range(len(self.net.bus)))[i]) for i in list(range(len(self.net.bus)))])
-            # print("t = ", self.time_iteration)
-            if self.time_iteration > 20:
-                self.net.line.in_service.at[5] = False
+            for i in range(len(self.line_status)):
+                self.net.line.in_service.at[i] = self.line_status[i]
+            
 
         
             # if self.time_iteration < 23:
@@ -393,17 +426,24 @@ class PowerEngine:
                 if self.net.line.iloc[i]["in_service"] == True:
                     lines_in_service.append(self.net.line.index[i])
             
+            # print(self.net.line.iloc[5]["in_service"])
+            
             lc = pp.plotting.create_line_collection(self.net, lines=lines_in_service, color="black", zorder=1, use_bus_geodata=True)
 
-            draw_list = [lc, bc, tc, eg, loadc, genc, brc]
+            draw_list = [lc, bc, eg, loadc, genc, brc]
             self.net.load.loc[:, "p_mw"] *= load_list_p[self.time_iteration][:] 
             self.net.load.loc[:, "q_mvar"] *= load_list_q[self.time_iteration][:] 
-            if len(self.net.bus.index)<14:
-                del draw_list[2]
+            
+            # if len(self.net.trafo) != 0:
+            #     print("hej")
+            # del draw_list[2]
 
             pp.plotting.draw_collections(draw_list, ax=ax)
             
-            pp.runpp(self.net, run_control=True, max_iteration=50, calculate_voltage_angles=True, init="results")
+            try:
+                pp.runpp(self.net, run_control=True, max_iteration=400, calculate_voltage_angles=True, tolerance_mva=1e-5, init="results", numba=True)
+            except pp.powerflow.LoadflowNotConverged:
+                pp.runpp(self.net, run_control=True, max_iteration=400, calculate_voltage_angles=True, tolerance_mva=1e-5, numba=True)
             self.get_measurements()
             # print(self.net.measurement)
 
@@ -483,12 +523,11 @@ class PowerEngine:
                 else:
                     print("An attack occured without being detected (False Negative)")
                     self.fn +=1
-
-            est.estimate(self.net, calculate_voltage_angles=True, init="results")
-
+            try:
+                est.estimate(self.net, calculate_voltage_angles=True, tolerance=5e-5, init="results")
+            except ValueError:
+                est.estimate(self.net, calculate_voltage_angles=True, tolerance=5e-5)
             # print(self.evaluate())
-
-
 
             # list of all bus indices
             buses = self.net.bus.index.tolist() 

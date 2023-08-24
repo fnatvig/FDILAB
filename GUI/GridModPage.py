@@ -29,7 +29,7 @@ class GridModPage(tk.Frame):
 
         header = tk.Label(second_frame, text="Line", width=len("Line")+18)
         header.grid(row=0, column = 0, columnspan=2)
-        header = tk.Label(second_frame, text="Status")
+        header = tk.Label(second_frame, text="Action")
         header.grid(row=0, column=2)
         # header = tk.Label(second_frame, text="Intensity")
         # header.grid(row=0, column=4)
@@ -42,7 +42,7 @@ class GridModPage(tk.Frame):
             self.labels.append(tk.Label(second_frame, text=f"{i}"))
             self.labels[i].grid(row=i+1, column=0, columnspan=2)
             self.status.append(True)
-            self.buttons.append(tk.Button(second_frame, text='ACTIVE', command=partial(self.update, i)))
+            self.buttons.append(tk.Button(second_frame, text='DISCONNECT', command=partial(self.update, i)))
             self.buttons[i].grid(row=i+1, column=2)
 
         
@@ -50,9 +50,9 @@ class GridModPage(tk.Frame):
         # width = len("Send Attack")
         # self.var = tk.IntVar()
         # self.cb = tk.Checkbutton(second_frame, variable=var, command=lambda: self.var.set(self.var.get()))
-        self.button1 = tk.Button(second_frame, text="Modify Grid", command=lambda: self.check_if_active(), width=len("Undo Modification"))
+        self.button1 = tk.Button(second_frame, text="Modify Grid", command=lambda: self.modify(), width=len("Undo Modification"))
         self.button1.grid(row=len(self.controller.line_list)+1, column=2, padx=(0,10), sticky='e'+'w')
-        self.button2 = tk.Button(second_frame, text="Undo Modification", command=lambda: self.undo())
+        self.button2 = tk.Button(second_frame, text="Undo Modification", command=lambda: self.undo_mod())
         self.button2.grid(row=len(self.controller.line_list)+1, column=0, padx=(10,0), sticky='e'+'w')
         # self.my_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
         self.controller.geometry(f"{int(self.controller.ws*0.22)}x{int(self.controller.hs*0.33)}+{int(self.controller.ws/2)}+{int(self.controller.hs/9)}")
@@ -60,15 +60,15 @@ class GridModPage(tk.Frame):
     def update(self, i):
         if self.status[i]:
             self.status[i] = False
-            self.buttons[i].config(text='DISABLED')
+            self.buttons[i].config(text='CONNECT')
         else: 
             self.status[i] = True
-            self.buttons[i].config(text='DISABLED')
+            self.buttons[i].config(text='DISCONNECT')
 
     def undo(self):
         for i in range(len(self.controller.line_list)):
             self.status[i] = True
-            self.buttons[i].config(text='ACTIVE')
+            self.buttons[i].config(text='DISCONNECT')
             
 
     
@@ -86,9 +86,30 @@ class GridModPage(tk.Frame):
     def get_back(self):
         self.controller.reset_win()
 
-    # def send_attack(self):
-    #     for i in range(len(self.controller.line_list)):
-    #         intensity = float(self.sliders[i].get())
+    def modify(self):
+        for i in range(len(self.controller.line_list)):
+            if i < len(self.controller.line_list)-1:
+                self.controller.socket.sendto(
+                    struct.pack('i i ? 7x', MOD_GRID, i, self.status[i]),
+                    (UDP_IP, POWER_PORT))
+            else:
+                self.controller.socket.sendto(
+                    struct.pack('i i ? 7x', LAST_MOD_GRID, i, self.status[i]),
+                    (UDP_IP, POWER_PORT))
+                
+    def undo_mod(self):
+        self.undo()
+        for i in range(len(self.controller.line_list)):
+            if i < len(self.controller.line_list)-1:
+                self.controller.socket.sendto(
+                    struct.pack('i i ? 7x', MOD_GRID, i, self.status[i]),
+                    (UDP_IP, POWER_PORT))
+            else:
+                self.controller.socket.sendto(
+                    struct.pack('i i ? 7x', LAST_MOD_GRID, i, self.status[i]),
+                    (UDP_IP, POWER_PORT))
+
+            # intensity = float(self.sliders[i].get())
     #         m_type = None
     #         if self.drops[i].get() == "Voltage":
     #             m_type = b'v'

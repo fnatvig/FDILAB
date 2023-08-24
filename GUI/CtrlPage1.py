@@ -22,8 +22,10 @@ class CtrlPage1(tk.Frame):
         self.controller.sim_menu.entryconfig("Run Scenario", state="active")
         self.controller.scenario_menu.entryconfig("Run Scenario 1 (unattacked)", state="active")
         self.controller.scenario_menu.entryconfig("Run Scenario 1 (attacked)", state="active")
+        self.controller.scenario_menu.entryconfig("Run Scenario 1 (attacked, modified)", state="active")
         self.controller.scenario_menu.entryconfig("Run Scenario 2 (unattacked)", state="active")
         self.controller.scenario_menu.entryconfig("Run Scenario 2 (attacked)", state="active")
+        self.controller.scenario_menu.entryconfig("Run Scenario 2 (attacked, modified)", state="active")
         self.controller.sim_menu.entryconfig("Stop Simulation", state="active")
         self.controller.menubar.entryconfig("Window", state="active")
 

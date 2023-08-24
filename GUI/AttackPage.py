@@ -11,10 +11,10 @@ class AttackPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
         
-        main_frame = tk.Frame(self.controller, width=int(0.16*self.controller.ws))
+        main_frame = tk.Frame(self.controller, width=int(0.18*self.controller.ws))
         main_frame.pack(fill=tk.BOTH, expand=1)
 
-        my_canvas = tk.Canvas(main_frame, width=int(0.16*self.controller.ws))
+        my_canvas = tk.Canvas(main_frame, width=int(0.18*self.controller.ws))
         my_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
 
         my_scrollbar = ttk.Scrollbar(main_frame, orient=tk.VERTICAL, command=my_canvas.yview)
@@ -24,8 +24,8 @@ class AttackPage(tk.Frame):
         my_canvas.configure(yscrollcommand=my_scrollbar.set)
         my_canvas.bind('<Configure>', lambda e: my_canvas.configure(scrollregion=my_canvas.bbox("all")))
 
-        second_frame = tk.Frame(my_canvas, width=int(0.16*self.controller.ws))
-        my_canvas.create_window((0,0), width=int(0.16*self.controller.ws), window=second_frame, anchor="nw")
+        second_frame = tk.Frame(my_canvas, width=int(0.18*self.controller.ws))
+        my_canvas.create_window((0,0), width=int(0.18*self.controller.ws), window=second_frame, anchor="nw")
 
         header = tk.Label(second_frame, text="Bus", width=len("Bus")+2)
         header.grid(row=0, column = 0, columnspan=2)
@@ -57,7 +57,7 @@ class AttackPage(tk.Frame):
         self.button2 = tk.Button(second_frame, text="Undo Attack", command=lambda: self.undo_attack())
         self.button2.grid(row=len(self.controller.bus_list)+1, column=0, columnspan=3, sticky='e'+'w')
         # self.my_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
-        # self.controller.geometry(f"{int(self.controller.ws*0.2)}x{int(self.controller.hs*0.8)}+{int(self.controller.ws/2)}+{int(self.controller.hs/9)}")
+        self.controller.geometry(f"{int(self.controller.ws*0.21)}x{int(self.controller.hs*0.6)}+{int(self.controller.ws/2)}+{int(self.controller.hs/9)}")
         
     def get_back(self):
         self.controller.reset_win()

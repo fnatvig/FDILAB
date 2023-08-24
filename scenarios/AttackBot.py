@@ -1,7 +1,6 @@
 from socket import *
 import numpy as np
 from random import Random
-import struct
 
 from constants import *
 
@@ -28,7 +27,8 @@ class AttackBot:
             return self.undo_attack(bus_list)
 
     def send_attack(self, bus_list):
-        if (self.scenario == SCENARIO1_ATTACKED):
+        if (self.scenario == SCENARIO1_ATTACKED or
+            self.scenario == SCENARIO1_MOD_ATTACKED):
             intensity = []
             m_type = []
             for i in range(len(bus_list)):
@@ -37,7 +37,8 @@ class AttackBot:
 
             return intensity, m_type
         
-        if (self.scenario == SCENARIO2_ATTACKED):
+        if (self.scenario == SCENARIO2_ATTACKED or
+            self.scenario == SCENARIO2_MOD_ATTACKED):
             intensity = []
             m_type = []
             for i in range(len(bus_list)):
