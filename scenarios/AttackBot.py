@@ -11,10 +11,12 @@ class AttackBot:
 
 
     def set_active(self):
-        if self.scenario == SCENARIO1_ATTACKED:
+        if (self.scenario == SCENARIO1_ATTACKED or 
+            self.scenario == SCENARIO1_MOD_ATTACKED):
             self.random = Random(1)
             self.active = True
-        elif self.scenario == SCENARIO2_ATTACKED:
+        elif (self.scenario == SCENARIO2_ATTACKED or 
+            self.scenario == SCENARIO2_MOD_ATTACKED):
             self.random = Random(3)
             self.active = True
         else:

@@ -92,6 +92,7 @@ class PowerEngine:
                 self.attackbot.scenario = nr
                 self.attackbot.set_active()
                 self.modbot.scenario = nr
+                self.modbot.number_of_buses = len(self.net.bus.index)
                 self.modbot.set_active()
                 sim_process.start() 
                 sim_started = True
@@ -125,7 +126,7 @@ class PowerEngine:
             elif msg == SAVE_SIM:
                 self.sim_queue.put(False)    
                 size = self.data_queue.qsize()
-                self.df = pd.DataFrame(columns=["time", "bus", "V", "P", "Q", "label"])
+                self.df = pd.DataFrame(columns=["time", "bus", "V", "P", "Q", "grid_modified", "label"])
                 for i in range(size):
 
                     print(f"Exporting simulation... {i}/{size}", end="\r")
@@ -276,10 +277,7 @@ class PowerEngine:
                 plt.subplots_adjust(left=0.0, bottom=0.0, top=1.0, right=1.0)
                 pp.plotting.draw_collections([lc, bc, eg], ax=ax)
                 self.n_iterations = len(load_prof_p)
-                # self.net.line.drop(4, inplace=True)
-                # self.net.line.reset_index(inplace=True)
-
-                # print(self.net.line)
+                self.modbot.t_end = self.n_iterations
                 ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, bc, lc, eg, loadc, genc, brc, load_prof_p, load_prof_q, base_values), frames =self.gen, interval=self.speed, save_count=500, cache_frame_data=True, repeat=False) 
                 plt.show()
 
@@ -404,7 +402,7 @@ class PowerEngine:
             if self.scenario_toggle:
                 if self.time_iteration > 0:
                     if self.modbot.active:
-                        self.line_status = self.modbot.main(self.net.line.index)
+                        self.line_status = self.modbot.main(self.net.line.index, self.time_iteration)
             try:
                 self.line_status = self.grid_queue.get(False)
             except queue.Empty:
@@ -441,51 +439,54 @@ class PowerEngine:
             pp.plotting.draw_collections(draw_list, ax=ax)
             
             try:
-                pp.runpp(self.net, run_control=True, max_iteration=400, calculate_voltage_angles=True, tolerance_mva=1e-5, init="results", numba=True)
+                pp.runpp(self.net, run_control=True, max_iteration=400, calculate_voltage_angles=True, tolerance_mva=1e-7, init="results", numba=True)
             except pp.powerflow.LoadflowNotConverged:
-                pp.runpp(self.net, run_control=True, max_iteration=400, calculate_voltage_angles=True, tolerance_mva=1e-5, numba=True)
+                pp.runpp(self.net, run_control=True, max_iteration=400, calculate_voltage_angles=True, tolerance_mva=1e-6, numba=True)
             self.get_measurements()
             # print(self.net.measurement)
 
+            grid_modified = "False"
+            if self.line_status != len(self.net.bus.index)*[True]:
+                grid_modified = "True"
             
             raw_measurements = []
-            
             
             for j in range(len(self.net.measurement.index)):
                 element_type = copy(self.net.measurement.iloc[j]["element_type"])
                 measurement_type = copy(self.net.measurement.iloc[j]["measurement_type"])
                 element = copy(self.net.measurement.iloc[j]["element"])
                 value = copy(self.net.measurement.iloc[j]["value"])
+                
                 if element_type == "bus":
                     if measurement_type =="v":
                         if self.last_attack.active:
-                            record = [self.time_iteration, element, value, None, None, "attack"]
+                            record = [self.time_iteration, element, value, None, None, grid_modified, "attack"]
                             raw_measurements.append(record)
                             self.data_queue.put(record)
                         else:
-                            record = [self.time_iteration, element, value, None, None, "no_attack"]
+                            record = [self.time_iteration, element, value, None, None, grid_modified, "no_attack"]
                             raw_measurements.append(record)
                             self.data_queue.put(record)
                     if measurement_type =="p":
                         if self.last_attack.active:
-                            record = [self.time_iteration, element, None, value, None, "attack"]
+                            record = [self.time_iteration, element, None, value, None, grid_modified, "attack"]
                             raw_measurements.append(record)
                             self.data_queue.put(record)
                         else:
-                            record = [self.time_iteration, element, None, value, None, "no_attack"]
+                            record = [self.time_iteration, element, None, value, None, grid_modified, "no_attack"]
                             raw_measurements.append(record)
                             self.data_queue.put(record)
                     if measurement_type =="q":
                         if self.last_attack.active:
-                            record = [self.time_iteration, element, None, None, value, "attack"]
+                            record = [self.time_iteration, element, None, None, value, grid_modified, "attack"]
                             raw_measurements.append(record)
                             self.data_queue.put(record)
                         else:
-                            record = [self.time_iteration, element, None, None, value, "no_attack"]
+                            record = [self.time_iteration, element, None, None, value, grid_modified, "no_attack"]
                             raw_measurements.append(record)
                             self.data_queue.put(record)
 
-            df = pd.DataFrame(raw_measurements, columns=["time", "bus", "V", "P", "Q", "label"])
+            df = pd.DataFrame(raw_measurements, columns=["time", "bus", "V", "P", "Q", "grid_modified", "label"])
             pre = Preprocessor(df)
             pre.sort_instant()
 
@@ -524,9 +525,9 @@ class PowerEngine:
                     print("An attack occured without being detected (False Negative)")
                     self.fn +=1
             try:
-                est.estimate(self.net, calculate_voltage_angles=True, tolerance=5e-5, init="results")
+                est.estimate(self.net, calculate_voltage_angles=True, tolerance=1e-5, init="results")
             except ValueError:
-                est.estimate(self.net, calculate_voltage_angles=True, tolerance=5e-5)
+                est.estimate(self.net, calculate_voltage_angles=True, tolerance=1e-5)
             # print(self.evaluate())
 
             # list of all bus indices
@@ -534,9 +535,12 @@ class PowerEngine:
             vm_pu = np.array(self.net.res_bus.iloc[:]['vm_pu'])
             vm_pu_est = np.array(self.net.res_bus_est.iloc[:]['vm_pu'])
             vm_kv = np.array(self.net.res_bus.iloc[:]['vm_pu'])*np.array(bv[:])
+            # vm_kv = np.array(self.net.res_bus.iloc[:]['vm_pu'])*np.array(bv[:])
             vm_kv_est = np.array(self.net.res_bus_est.iloc[:]['vm_pu'])*np.array(bv[:])
             minimum = np.array(self.net.bus.iloc[:]['min_vm_pu'])*vm_pu
             maximum = np.array(self.net.bus.iloc[:]['max_vm_pu'])*vm_pu
+
+
 
             
             try:
@@ -550,16 +554,6 @@ class PowerEngine:
             if self.toggle_plot:
                 plot_data = struct.pack("f f", mse, mae)
                 self.socket.sendto(plot_data, (UDP_IP, PLOT_PORT))
-
-            # try:
-
-            #     self.data_queue.get(False)
-            #     plot_data = struct.pack("f f", vm_pu[0], vm_pu_est[0])
-            #     self.socket.sendto(plot_data, (UDP_IP, PLOT_PORT))
-            #     self.toggle_plot = True
-            # except queue.Empty:
-            #     pass
-            
 
             vm_kvr, vm_kvb, busesr, busesb = self.alarm(buses, vm_pu, vm_kv, maximum, minimum)
             vm_kvr_est, vm_kvb_est, busesr_est, busesb_est = self.alarm(buses, vm_pu_est, vm_kv_est, maximum, minimum)
@@ -585,8 +579,11 @@ class PowerEngine:
                 lines_geodata_y.append(from_bus_y+(to_bus_y-from_bus_y)/2)
 
             coords_lines = zip(lines_geodata_x, lines_geodata_y)
+            t_x = math.floor(min(self.net.bus_geodata.iloc[:]['x']))
+            t_y = math.ceil(max(self.net.bus_geodata.iloc[:]['y']))
+            t_col = pp.plotting.create_annotation_collection(size=0.13, texts=np.char.add('t = ', np.char.mod('%d', [self.time_iteration])), coords=zip([t_x],[t_y]), zorder=3, color="black")
+            draw_list.append(t_col)
             lines_idx = pp.plotting.create_annotation_collection(size=0.13, texts=np.char.mod('%d', self.net.line.index.tolist()), coords=coords_lines, zorder=3, color="black")
-
             # print(self.net.line)
             # print(len(self.net.line.index))
             bic_idx = pp.plotting.create_annotation_collection(size=0.13, texts=np.char.mod('%d', buses), coords=coordsi, zorder=3, color="blue")

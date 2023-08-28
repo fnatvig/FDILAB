@@ -26,14 +26,16 @@ class CtrlPage1(tk.Frame):
         self.controller.scenario_menu.entryconfig("Run Scenario 2 (unattacked)", state="active")
         self.controller.scenario_menu.entryconfig("Run Scenario 2 (attacked)", state="active")
         self.controller.scenario_menu.entryconfig("Run Scenario 2 (attacked, modified)", state="active")
-        self.controller.sim_menu.entryconfig("Stop Simulation", state="active")
+        self.controller.sim_menu.entryconfig("Reset Simulation", state="active")
         self.controller.menubar.entryconfig("Window", state="active")
 
         if msg == LOAD30:
             self.controller.number_of_buses = 30
+            self.controller.scenario_menu.entryconfig(2, label="Disconnect line 35")
             self.controller.number_of_lines = 41
         elif msg == LOAD9:
             self.controller.number_of_buses = 9
+            self.controller.scenario_menu.entryconfig(2, label="Disconnect line 5")
             self.controller.number_of_lines = 9
 
         self.controller.show_page(CtrlPage2)

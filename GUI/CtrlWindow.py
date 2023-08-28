@@ -98,7 +98,7 @@ class CtrlWindow(tk.Tk):
             )
         self.sim_menu.add_separator()
         self.sim_menu.add_command(
-        label='Stop Simulation',
+        label='Reset Simulation',
         state="disabled",
         command=lambda: self.reset_sim()
             )
@@ -146,7 +146,7 @@ class CtrlWindow(tk.Tk):
         msg = self.socket2.recv(1024)
         if msg == EXPORT_DONE:
             self.sim_menu.entryconfig("Run Scenario", state="disabled")
-            self.sim_menu.entryconfig("Stop Simulation", state="disabled")
+            self.sim_menu.entryconfig("Reset Simulation", state="disabled")
             self.sim_menu.entryconfig("Export Simulation", state="disabled")
             self.menubar.entryconfig("Window", state="disabled")
             self.show_page(CtrlPage4)
@@ -246,8 +246,13 @@ class CtrlWindow(tk.Tk):
         self.destroy()
 
     def reset_sim(self):
+        print("Simulation rebooted")
+        self.scenario_menu.entryconfig(0, label="Run Scenario 1 (unattacked)")
+        self.scenario_menu.entryconfig(1, label="Run Scenario 1 (attacked)")
+        self.scenario_menu.entryconfig(2, label="Run Scenario 1 (attacked, modified)")
+
         self.sim_menu.entryconfig("Run Scenario", state="disabled")
-        self.sim_menu.entryconfig("Stop Simulation", state="disabled")
+        self.sim_menu.entryconfig("Reset Simulation", state="disabled")
         self.sim_menu.entryconfig("Export Simulation", state="disabled")
         self.action_menu.entryconfig("Open Defense Window", state="active")
         self.action_menu.entryconfig("Open Attack Window", state="active")

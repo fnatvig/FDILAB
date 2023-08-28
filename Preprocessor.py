@@ -13,6 +13,8 @@ class Preprocessor:
                 columns.append("V_" + bus)
                 columns.append("P_" + bus)
                 columns.append("Q_" + bus)
+
+            columns.append("grid_modified")
             columns.append("label")
 
             self.df = pd.DataFrame(columns=columns)
@@ -39,6 +41,7 @@ class Preprocessor:
         row = [self.raw_df.iloc[0]["time"]]
         for k in range(len(net_data)):
             row.append(net_data[k])
+        row.append(self.raw_df.iloc[m-1]["grid_modified"])
         row.append(self.raw_df.iloc[m-1]["label"])
         self.df.loc[len(self.df)] = row
 
@@ -65,13 +68,15 @@ class Preprocessor:
             row = [t]
             for k in range(len(net_data)):
                 row.append(net_data[k])
+            
+            row.append(self.raw_df.iloc[m-1]["grid_modified"])
             row.append(self.raw_df.iloc[m-1]["label"])
             self.df.loc[len(self.df)] = row
             t+=1
 
 
     def disassemble_single(self, model, data):
-        arr = list(data.values[0][1:-1])
+        arr = list(data.values[0][1:-2])
         # x_max = max(arr)
         # x_min = min(arr)
         new_list = []
@@ -89,7 +94,7 @@ class Preprocessor:
         min_arr = []
         for i in range(len(data)):
             subarr = []
-            for j in range(1, len(data.columns)-1):
+            for j in range(1, len(data.columns)-2):
                 x = data.iloc[i][data.columns[j]]
                 x_max = max(data.iloc[:][data.columns[j]])
                 x_min = min(data.iloc[:][data.columns[j]])
