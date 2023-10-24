@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import ttk
 import struct
 
-# from GUI.AttackPage1 import *
 from constants import *
 
 

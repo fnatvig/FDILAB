@@ -10,7 +10,7 @@ class GridModWindow(tk.Tk):
         tk.Tk.__init__(self)
         self.ws = self.winfo_screenwidth() # width of the screen
         self.hs = self.winfo_screenheight()
-        self.title("Modify Grid")
+        self.title("Grid Modifier")
         # self.geometry(f"{int(self.ws*0.3)}x{int(self.hs*0.8)}+{int(self.ws/2)}+{int(self.hs/9)}")
         # self.geometry(f"{int(self.ws*0.2)}x{int(self.hs*0.8)}")
         self.container = tk.Frame(self)
@@ -27,7 +27,7 @@ class GridModWindow(tk.Tk):
         self.show_page(GridModPage)
         
     def on_closing(self, action_menu):
-        action_menu.entryconfig("Modify Grid", state="active")
+        action_menu.entryconfig("Grid Modifier", state="active")
         self.destroy()
 
     def show_page(self, cont):

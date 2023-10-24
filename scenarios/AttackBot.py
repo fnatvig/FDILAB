@@ -5,7 +5,7 @@ from random import Random
 from constants import *
 
 class AttackBot:
-    def __init__(self, scenario=None, active=False):
+    def __init__(self, scenario=None):
         self.scenario = scenario
         self.attack_ctr =0
 
@@ -15,8 +15,9 @@ class AttackBot:
             self.scenario == SCENARIO1_MOD_ATTACKED):
             self.random = Random(1)
             self.active = True
-        elif (self.scenario == SCENARIO2_ATTACKED or 
-            self.scenario == SCENARIO2_MOD_ATTACKED):
+        elif (self.scenario == SCENARIO2_ATTACKED):
+        #  or 
+            # self.scenario == SCENARIO2_MOD_ATTACKED):
             self.random = Random(3)
             self.active = True
         else:
@@ -39,8 +40,8 @@ class AttackBot:
 
             return intensity, m_type
         
-        if (self.scenario == SCENARIO2_ATTACKED or
-            self.scenario == SCENARIO2_MOD_ATTACKED):
+        if (self.scenario == SCENARIO2_ATTACKED):
+            # self.scenario == SCENARIO2_MOD_ATTACKED):
             intensity = []
             m_type = []
             for i in range(len(bus_list)):

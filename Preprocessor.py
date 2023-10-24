@@ -74,7 +74,6 @@ class Preprocessor:
             self.df.loc[len(self.df)] = row
             t+=1
 
-
     def disassemble_single(self, model, data):
         arr = list(data.values[0][1:-2])
         # x_max = max(arr)
@@ -88,25 +87,41 @@ class Preprocessor:
                 new_list.append((arr[i]-model.min_arr[i])/(model.max_arr[i]-model.min_arr[i]))
         return new_list
     
-    def disassemble_df(self, data):
+    def disassemble_df(self, data, arr_max=None, arr_min=None):
         arr = []
         max_arr = []
         min_arr = []
-        for i in range(len(data)):
-            subarr = []
-            for j in range(1, len(data.columns)-2):
-                x = data.iloc[i][data.columns[j]]
-                x_max = max(data.iloc[:][data.columns[j]])
-                x_min = min(data.iloc[:][data.columns[j]])
-                if i == 0:
-                    max_arr.append(x_max)
-                    min_arr.append(x_min)
-                if (x_max - x_min) == 0:
-                    subarr.append(1.0)
-                else: 
-                    subarr.append((x-x_min)/(x_max-x_min))
-            arr.append(subarr)
-        return arr, max_arr, min_arr
+        if (type(arr_max) != list and 
+            type(arr_min) != list):  
+            for i in range(len(data)):
+                subarr = []
+                for j in range(1, len(data.columns)-2):
+                    x = data.iloc[i][data.columns[j]]
+                    x_max = max(data.iloc[:][data.columns[j]])
+                    x_min = min(data.iloc[:][data.columns[j]])
+                    if i == 0:
+                        max_arr.append(x_max)
+                        min_arr.append(x_min)
+                    if (x_max - x_min) == 0:
+                        subarr.append(1.0)
+                    else: 
+                        subarr.append((x-x_min)/(x_max-x_min))
+                arr.append(subarr)
+            return arr, max_arr, min_arr
+        else:
+            for i in range(len(data)):
+                subarr = []
+                for j in range(1, len(data.columns)-2):
+                    x = data.iloc[i][data.columns[j]]
+                    x_max = arr_max[j-1]
+                    x_min = arr_min[j-1]
+
+                    if (x_max - x_min) == 0:
+                        subarr.append(1.0)
+                    else: 
+                        subarr.append((x-x_min)/(x_max-x_min))
+                arr.append(subarr)
+            return arr
 
     # def disassemble_df(self, data):
     #     arr = []

@@ -12,14 +12,30 @@ class AutoEncoder(Model):
     super(AutoEncoder, self).__init__()
     self.encoder = tf.keras.Sequential([
        
-                  tf.keras.layers.Dense(27, activation="relu"),
-                  tf.keras.layers.Dense(24, activation="relu"),
-                  tf.keras.layers.Dense(18, activation="relu"),
+                  tf.keras.layers.Dense(90, activation="relu"),
+                  tf.keras.layers.Dropout(0.1),
+                  tf.keras.layers.Dense(30, activation="relu", ),
+                  tf.keras.layers.Dropout(0.1),
+                  tf.keras.layers.Dense(20, activation="relu", ),
+                  tf.keras.layers.Dropout(0.05),
+                  tf.keras.layers.Dense(15, activation="relu"),
+                  tf.keras.layers.Dropout(0.05),
+                  tf.keras.layers.Dense(10, activation="relu"),
+                  tf.keras.layers.Dropout(0.01),
+                  tf.keras.layers.Dense(5, activation="relu"),
               ])
     self.decoder = tf.keras.Sequential([
-                  tf.keras.layers.Dense(18, activation="relu"),
-                  tf.keras.layers.Dense(24, activation="relu"),
-                  tf.keras.layers.Dense(27, activation="sigmoid")
+                  tf.keras.layers.Dense(5, activation="relu"),
+                  tf.keras.layers.Dropout(0.01),
+                  tf.keras.layers.Dense(10, activation="relu"),
+                  tf.keras.layers.Dropout(0.05),
+                  tf.keras.layers.Dense(15, activation="relu"),
+                  tf.keras.layers.Dropout(0.05),
+                  tf.keras.layers.Dense(20, activation="relu"),
+                  tf.keras.layers.Dropout(0.1),
+                  tf.keras.layers.Dense(30, activation="relu"),
+                  tf.keras.layers.Dropout(0.1),
+                  tf.keras.layers.Dense(90, activation="sigmoid")
               ])
     self.threshold = None
     self.max_arr = None
@@ -29,14 +45,31 @@ class AutoEncoder(Model):
     encoded = self.encoder(x)
     decoded = self.decoder(encoded)
     return decoded
-  
+
+  def get_threshold(self, new_df, max_arr, min_arr):
+    new_df = new_df.iloc[:][new_df.columns[1:]]
+    pre = Preprocessor(pd.DataFrame())
+    data = pre.disassemble_df(new_df, arr_max=max_arr, arr_min=min_arr)
+    data = pd.DataFrame(data)
+    input = data.reset_index(drop=True)
+    encoder_out = self.encoder(input.to_numpy()) #8 unit representation of data
+    decoder_out = self.decoder(encoder_out)
+
+    max_mse = 0
+    for i in range(len(input)):
+      real_data = input.iloc[i][input.columns[:]].to_numpy()
+      mse = (np.square(real_data - decoder_out[i])).mean(axis=0)
+      if mse>max_mse:
+        max_mse = mse 
+    return max_mse
+
 
   def train(self):
     # raw_data = pd.read_excel("data_exports/scenario2_attacked_9bus.xlsx")
     # pre = Preprocessor(pd.DataFrame())
     # data = pre.disassemble(raw_data)
     # print(data)
-    raw_data = pd.read_excel("data_exports/scenario2_attacked_9bus.xlsx")
+    raw_data = pd.read_excel("data_exports/scenario13.xlsx")
     df_normal = raw_data[raw_data["label"] == "no_attack"]
     df_attacked = raw_data[raw_data["label"] == "attack"]
 
@@ -51,12 +84,13 @@ class AutoEncoder(Model):
     # input = tf.random.normal((32,27))
     # output = self(input)
 
-    early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=30, mode="min")
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=50, mode="min")
     opt = tf.keras.optimizers.Adam(learning_rate=0.0004)
     self.compile(optimizer=opt, loss="mse")
     # second_layer_weights = self.get_layer('sequential_1').get_weights()[0]
-    normal_train_data = data.iloc[0:int(len(data)*0.8)][data.columns[:]].reset_index(drop=True)
-    normal_val_data = data.iloc[int(len(data)*0.8):][data.columns[:]].reset_index(drop=True)
+    data = data.sample(frac = 1, ignore_index=True)
+    normal_train_data = data.iloc[0:int(len(data)*0.7)][data.columns[:]].reset_index(drop=True)
+    normal_val_data = data.iloc[int(len(data)*0.7):][data.columns[:]].reset_index(drop=True)
     # tf.convert_to_tensor(normal_train_data)
     # tf.convert_to_tensor(normal_val_data)
     history = self.fit(normal_train_data.to_numpy(), normal_train_data.to_numpy(), epochs=10000, batch_size=32,
@@ -65,6 +99,9 @@ class AutoEncoder(Model):
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
     plt.show()
+    
+    threshold = self.get_threshold(pd.read_excel("data_exports/scenario14.xlsx"), max_arr, min_arr)
+
     encoder_out = self.encoder(normal_val_data.to_numpy()) #8 unit representation of data
     decoder_out = self.decoder(encoder_out)
     # decoder_out = tf.transpose(decoder_out)
@@ -79,18 +116,18 @@ class AutoEncoder(Model):
       if mse>max_mse:
         max_mse = mse 
     # print("max_mse = ", max_mse)
-    # with open("scripts/detection_models/autoencoder_9bus_threshold.txt", "w") as f:
-    #   print(str(max_mse), file=f)
+    with open("scripts/detection_models/autoencoder_30bus_threshold_train.txt", "w") as f:
+      print(str(threshold), file=f)
     
-    # with open("scripts/detection_models/autoencoder_9bus_max.txt", "w") as f:
-    #   for value in max_arr:
-    #     print(value, file=f)
+    with open("scripts/detection_models/autoencoder_30bus_max_train.txt", "w") as f:
+      for value in max_arr:
+        print(value, file=f)
 
-    # with open("scripts/detection_models/autoencoder_9bus_min.txt", "w") as f:
-    #   for value in min_arr:
-    #     print(value, file=f)
+    with open("scripts/detection_models/autoencoder_30bus_min_train.txt", "w") as f:
+      for value in min_arr:
+        print(value, file=f)
 
-    # self.save('scripts/detection_models/autoencoder_9bus.keras')
+    self.save('scripts/detection_models/autoencoder_30bus_train.keras')
 
 
 def filter(model, raw_data):

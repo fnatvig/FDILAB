@@ -75,7 +75,12 @@ class CtrlWindow(tk.Tk):
         self.scenario_menu.add_command(
         label='Run Scenario 2 (attacked, modified)',
         state="disabled",
-        command=lambda: self.load_scenario(SCENARIO2_MOD_ATTACKED)
+        command=lambda: self.load_scenario(SCENARIO2_MOD)
+            )
+        self.scenario_menu.add_command(
+        label='Run Scenario 3 (modified)',
+        state="disabled",
+        command=lambda: self.load_scenario(SCENARIO3_MOD)
             )
         self.sim_menu.add_cascade(
         label='Run Scenario',
@@ -121,7 +126,7 @@ class CtrlWindow(tk.Tk):
         label='Open Defense Window',
         command=lambda: self.open_defense_panel())
         self.action_menu.add_command(
-        label='Modify Grid',
+        label='Grid Modifier',
         command=lambda: self.open_grid_modifier())
 
         self.menubar.add_cascade(
@@ -189,7 +194,7 @@ class CtrlWindow(tk.Tk):
     def open_grid_modifier(self):
         line_list = [str(list(range(int(self.number_of_lines)))[i]) for i in list(range(int(self.number_of_lines)))]
         self.mod_win = GridModWindow(line_list)
-        self.action_menu.entryconfig("Modify Grid", state="disabled")
+        self.action_menu.entryconfig("Grid Modifier", state="disabled")
         self.mod_win.protocol("WM_DELETE_WINDOW", lambda: self.mod_win.on_closing(self.action_menu))            
 
 
@@ -250,6 +255,10 @@ class CtrlWindow(tk.Tk):
         self.scenario_menu.entryconfig(0, label="Run Scenario 1 (unattacked)")
         self.scenario_menu.entryconfig(1, label="Run Scenario 1 (attacked)")
         self.scenario_menu.entryconfig(2, label="Run Scenario 1 (attacked, modified)")
+        self.scenario_menu.entryconfig(3, label="Run Scenario 2 (unattacked)")
+        self.scenario_menu.entryconfig(4, label="Run Scenario 2 (attacked)")
+        self.scenario_menu.entryconfig(5, label="Run Scenario 2 (attacked, modified)")
+        self.scenario_menu.entryconfig(6, label="Run Scenario 3 (modified)")
 
         self.sim_menu.entryconfig("Run Scenario", state="disabled")
         self.sim_menu.entryconfig("Reset Simulation", state="disabled")
@@ -257,7 +266,7 @@ class CtrlWindow(tk.Tk):
         self.action_menu.entryconfig("Open Defense Window", state="active")
         self.action_menu.entryconfig("Open Attack Window", state="active")
         self.action_menu.entryconfig("Open Evaluation Window", state="active")
-        self.action_menu.entryconfig("Modify Grid", state="active")
+        self.action_menu.entryconfig("Grid Modifier", state="active")
         self.menubar.entryconfig("Window", state="disabled")
 
         self.socket1.sendto(RESET_SIM, (UDP_IP, POWER_PORT))

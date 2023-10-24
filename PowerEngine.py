@@ -52,6 +52,7 @@ class PowerEngine:
         self.attack_queue, self.defense_queue = Queue(), Queue()
         self.plot_queue = Queue()
         self.grid_queue = Queue()
+        self.memory = pd.DataFrame()
         self.tp = 0
         self.fp = 0
         self.tn = 0
@@ -66,7 +67,7 @@ class PowerEngine:
         # Wait for user to choose a test case
         msg = self.socket.recv(128)
         if msg == LOAD30:        
-            self.net = nw.case30()
+            self.net = nw.case_ieee30()
         elif msg == LOAD9:        
             self.net = nw.case9()        
         if not self.net == None:
@@ -138,10 +139,8 @@ class PowerEngine:
                 self.filename = bytes.decode(self.socket.recv(1024),"utf-8")
 
             elif msg == EXPORT_CSV:
-
                 if not os.path.exists("data_exports"):
                     os.mkdir("data_exports")
-                
                 self.df.to_csv("data_exports/"+self.filename+".csv")
                 print("The simulation has been successfully exported!")
 
@@ -150,7 +149,6 @@ class PowerEngine:
                 if not os.path.exists("data_exports"):
                     os.mkdir("data_exports")
                 self.df.to_excel("data_exports/"+self.filename+".xlsx")
-                # self.df.to_excel("data_exports/data_export.xlsx")
                 print("The simulation has been successfully exported!")
             
             unpacked = struct.unpack("i 12x", msg)
@@ -218,6 +216,7 @@ class PowerEngine:
         self.attack_queue, self.defense_queue = Queue(), Queue()
         self.plot_queue = Queue()
         self.grid_queue = Queue()
+        self.memory = pd.DataFrame()
         self.tp = 0
         self.fp = 0
         self.tn = 0
@@ -254,7 +253,7 @@ class PowerEngine:
                 bc = pp.plotting.create_bus_collection(self.net, self.net.bus.index, size=0.03, color="b", zorder=2)
                 eg = pp.plotting.create_ext_grid_collection(self.net, color="black", size=0.1, zorder=1, orientation=3.14159) 
                 loadc = pp.plotting.create_load_collection(self.net, color="black", zorder=1, size=0.1) 
-                # tc = pp.plotting.create_trafo_collection(self.net, color="black", size=0.05, zorder=1)
+                tc = pp.plotting.create_trafo_collection(self.net, color="black", size=0.05, zorder=1)
                 genc = pp.plotting.create_gen_collection(self.net, size=0.1, color="black", zorder=1, orientation=3.14159*2) 
                 brc = pp.plotting.create_bus_bus_switch_collection(self.net, size=0.05)
                 self.line_status = len(self.net.line.index)*[True]
@@ -275,10 +274,14 @@ class PowerEngine:
                 fig, ax = plt.subplots(figsize=(6, 6))
                 fig.canvas.manager.set_window_title('Network Window')
                 plt.subplots_adjust(left=0.0, bottom=0.0, top=1.0, right=1.0)
+                drawlist = [lc, bc, eg]
+                if len(self.net.bus.index) > 9:
+                    drawlist.append(tc)
+                
                 pp.plotting.draw_collections([lc, bc, eg], ax=ax)
                 self.n_iterations = len(load_prof_p)
                 self.modbot.t_end = self.n_iterations
-                ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, bc, lc, eg, loadc, genc, brc, load_prof_p, load_prof_q, base_values), frames =self.gen, interval=self.speed, save_count=500, cache_frame_data=True, repeat=False) 
+                ani = animation.FuncAnimation(fig, self.animate, fargs=(ax, bc, lc, tc, eg, loadc, genc, brc, load_prof_p, load_prof_q, base_values), frames =self.gen, interval=self.speed, save_count=500, cache_frame_data=True, repeat=False) 
                 plt.show()
 
                 
@@ -373,6 +376,18 @@ class PowerEngine:
 
         return busDF, lineDF, trafoDF 
     
+
+    def moving_window(self, current_state, memory_length=100):
+        if len(self.memory) == 0:
+            self.memory = pd.DataFrame([current_state])
+        else:
+            self.memory.loc[len(self.memory)] = current_state
+
+        if len(self.memory)>memory_length:
+            self.memory.drop(0)
+
+
+        
     # Used to create a random load profile (to make the simulation appear realistic over time)
     def create_load_profile(self, n_ts, volatility):
         n = len(self.net.load.index)
@@ -390,7 +405,7 @@ class PowerEngine:
         return load_profile
     
     # The main animation loop (running the power flow, measurement gathering, state estimation etc...)
-    def animate(self, i, ax, bc, lc, eg, loadc, genc, brc, load_list_p, load_list_q, bv):
+    def animate(self, i, ax, bc, lc, tc, eg, loadc, genc, brc, load_list_p, load_list_q, bv):
         try:
             # self.update_animation = self.anim_queue.get(False)
             self.update_animation = self.sim_queue.get(False)
@@ -411,24 +426,16 @@ class PowerEngine:
             for i in range(len(self.line_status)):
                 self.net.line.in_service.at[i] = self.line_status[i]
             
-
-        
-            # if self.time_iteration < 23:
-            #     if self.time_iteration > 17:
-            #         print("t = ", self.time_iteration)
-            #         print(self.net.res_line.iloc[5][self.net.res_line.columns[:]])
-            #         print(self.net.res_line_est.iloc[5][self.net.res_line.columns[:]])
-
             lines_in_service = []
             for i in range(len(self.net.line.index)):
                 if self.net.line.iloc[i]["in_service"] == True:
                     lines_in_service.append(self.net.line.index[i])
-            
-            # print(self.net.line.iloc[5]["in_service"])
-            
+                        
             lc = pp.plotting.create_line_collection(self.net, lines=lines_in_service, color="black", zorder=1, use_bus_geodata=True)
 
             draw_list = [lc, bc, eg, loadc, genc, brc]
+            if len(self.net.bus.index) == 30:
+                draw_list.append(tc)
             self.net.load.loc[:, "p_mw"] *= load_list_p[self.time_iteration][:] 
             self.net.load.loc[:, "q_mvar"] *= load_list_q[self.time_iteration][:] 
             
@@ -446,7 +453,7 @@ class PowerEngine:
             # print(self.net.measurement)
 
             grid_modified = "False"
-            if self.line_status != len(self.net.bus.index)*[True]:
+            if self.line_status != len(self.net.line.index)*[True]:
                 grid_modified = "True"
             
             raw_measurements = []
@@ -489,7 +496,6 @@ class PowerEngine:
             df = pd.DataFrame(raw_measurements, columns=["time", "bus", "V", "P", "Q", "grid_modified", "label"])
             pre = Preprocessor(df)
             pre.sort_instant()
-
             try:
                 toggle = self.defense_queue.get(False)
                 self.defense.set_active(toggle)
@@ -500,8 +506,8 @@ class PowerEngine:
                     pass
             except queue.Empty:
                 pass
-
-            verdict = self.defense.filter(pre.df)
+            
+            verdict = self.defense.filter(pre.df, self.memory)
 
             if verdict == "attack":
                 
