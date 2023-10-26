@@ -24,7 +24,7 @@ class AttackBot:
             self.active = False
 
     def main(self, bus_list):
-        if self.random.choice(list(range(9)))==0:
+        if self.random.choice(list(range(3)))==0:
             return self.send_attack(bus_list)
         else:
             return self.undo_attack(bus_list)

@@ -353,7 +353,8 @@ class PowerEngine:
         #     np.random.seed(1)
         # else:
         #     np.random.seed(1)
-        np.random.seed(1)
+        if self.scenario_toggle:
+            np.random.seed(1)
 
         bus_data = [np.array(self.net.res_bus.iloc[:]["vm_pu"]+np.random.normal(0,sigma_bus_v, len(self.net.res_bus.index))),
                     np.array(self.net.res_bus.iloc[:]["p_mw"]+np.random.normal(0,sigma_bus_pq, len(self.net.res_bus.index))),
@@ -623,6 +624,7 @@ class PowerEngine:
                     print("Precision = ", self.tp/(self.tp+self.fp))
                 if (self.tp+self.fn) != 0:
                     print("Recall = ", self.tp/(self.tp+self.fn))
+                print(f"Number of attacks executed = {self.tp+self.fn}")
                 print("\n")
                 if self.scenario_toggle:
 

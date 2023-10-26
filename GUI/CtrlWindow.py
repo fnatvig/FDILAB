@@ -126,7 +126,7 @@ class CtrlWindow(tk.Tk):
         label='Open Defense Window',
         command=lambda: self.open_defense_panel())
         self.action_menu.add_command(
-        label='Grid Modifier',
+        label='Open Grid Modifier',
         command=lambda: self.open_grid_modifier())
 
         self.menubar.add_cascade(
@@ -194,7 +194,7 @@ class CtrlWindow(tk.Tk):
     def open_grid_modifier(self):
         line_list = [str(list(range(int(self.number_of_lines)))[i]) for i in list(range(int(self.number_of_lines)))]
         self.mod_win = GridModWindow(line_list)
-        self.action_menu.entryconfig("Grid Modifier", state="disabled")
+        self.action_menu.entryconfig("Open Grid Modifier", state="disabled")
         self.mod_win.protocol("WM_DELETE_WINDOW", lambda: self.mod_win.on_closing(self.action_menu))            
 
 
@@ -266,7 +266,7 @@ class CtrlWindow(tk.Tk):
         self.action_menu.entryconfig("Open Defense Window", state="active")
         self.action_menu.entryconfig("Open Attack Window", state="active")
         self.action_menu.entryconfig("Open Evaluation Window", state="active")
-        self.action_menu.entryconfig("Grid Modifier", state="active")
+        self.action_menu.entryconfig("Open Grid Modifier", state="active")
         self.menubar.entryconfig("Window", state="disabled")
 
         self.socket1.sendto(RESET_SIM, (UDP_IP, POWER_PORT))
