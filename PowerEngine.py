@@ -518,25 +518,26 @@ class PowerEngine:
                     self.net.measurement = copy(self.last_measurement)
 
                 if verdict == pre.df.iloc[0]["label"]:
-                    print("Attack detected (True Positive)")
+                    print(f"Attack detected (True Positive) at t={self.time_iteration}")
                     self.tp +=1
                 else:
-                    print("Normal observation misclassified as attacked (False Positive)")
+                    print(f"Normal observation misclassified as attacked (False Positive) at t={self.time_iteration}")
                     self.fp +=1
             else:
                 self.last_measurement = copy(self.net.measurement)
                 
                 if verdict == pre.df.iloc[0]["label"]:
                     self.tn +=1
+                    # print(f"t={self.time_iteration}")
                 else:
-                    print("An attack occured without being detected (False Negative)")
+                    print(f"An attack occured without being detected (False Negative) at t={self.time_iteration}")
                     self.fn +=1
             try:
                 est.estimate(self.net, calculate_voltage_angles=True, tolerance=1e-5, init="results")
             except ValueError:
                 est.estimate(self.net, calculate_voltage_angles=True, tolerance=1e-5)
             # print(self.evaluate())
-
+                
             # list of all bus indices
             buses = self.net.bus.index.tolist() 
             vm_pu = np.array(self.net.res_bus.iloc[:]['vm_pu'])
@@ -559,6 +560,7 @@ class PowerEngine:
             self.mse.append(float(mse))
 
             if self.toggle_plot:
+                # print(f"udp sent t={self.time_iteration}")
                 plot_data = struct.pack("f f", mse, mae)
                 self.socket.sendto(plot_data, (UDP_IP, PLOT_PORT))
 

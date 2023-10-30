@@ -21,12 +21,12 @@ class Scenario:
 
 
     def create_load_profile(self, net):
+        volatility=0.01
         n = len(net.load.index)
         if (self.scenario_nr == SCENARIO1_UNATTACKED or 
             self.scenario_nr == SCENARIO1_ATTACKED or 
             self.scenario_nr == SCENARIO1_MOD_ATTACKED):
             n_ts=100 
-            volatility=0.02
             load_profile = np.zeros([n_ts,n])
             load_values = np.zeros(n_ts)
             for i in range(n_ts):
@@ -44,7 +44,6 @@ class Scenario:
             self.scenario_nr == SCENARIO2_ATTACKED or 
             self.scenario_nr == SCENARIO2_MOD):
             n_ts=500 
-            volatility=0.02
             load_profile = np.zeros([n_ts,n])
             load_values = np.zeros(n_ts)
             for i in range(n_ts):
@@ -60,7 +59,6 @@ class Scenario:
         
         elif (self.scenario_nr == SCENARIO3_MOD):
             n_ts=300 
-            volatility=0.02
             load_profile = np.zeros([n_ts,n])
             load_values = np.zeros(n_ts)
             for i in range(n_ts):

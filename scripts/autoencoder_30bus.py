@@ -12,23 +12,23 @@ class AutoEncoder(Model):
     super(AutoEncoder, self).__init__()
     self.encoder = tf.keras.Sequential([
        
-                  tf.keras.layers.Dense(90, activation="relu"),
+                  tf.keras.layers.Flatten(),
                   tf.keras.layers.Dropout(0.1),
                   tf.keras.layers.Dense(30, activation="relu", ),
                   # tf.keras.layers.Dropout(0.1),
                   # tf.keras.layers.Dense(20, activation="relu", ),
                   # tf.keras.layers.Dropout(0.05),
                   # tf.keras.layers.Dense(15, activation="relu"),
-                  tf.keras.layers.Dropout(0.05),
+                  tf.keras.layers.Dropout(0.1),
                   tf.keras.layers.Dense(10, activation="relu"),
-                  tf.keras.layers.Dropout(0.01),
+                  # tf.keras.layers.Dropout(0.1),
                   tf.keras.layers.Dense(5, activation="relu"),
               ])
     self.decoder = tf.keras.Sequential([
-                  tf.keras.layers.Dense(5, activation="relu"),
-                  tf.keras.layers.Dropout(0.01),
+                  # tf.keras.layers.Dense(5, activation="relu"),
+                  # tf.keras.layers.Dropout(0.1),
                   tf.keras.layers.Dense(10, activation="relu"),
-                  tf.keras.layers.Dropout(0.05),
+                  tf.keras.layers.Dropout(0.1),
                   # tf.keras.layers.Dense(15, activation="relu"),
                   # tf.keras.layers.Dropout(0.05),
                   # tf.keras.layers.Dense(20, activation="relu"),

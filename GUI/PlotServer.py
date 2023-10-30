@@ -27,17 +27,19 @@ class PlotServer:
             # self.mae.append(y_new[1])
             self.x.append(self.time)
             self.time +=1
-            if self.flag or (len(self.mse)>500):
+            if (len(self.mse)>500):
                 del self.mse[0]
                 # del self.mae[0]
                 del self.x[0]
-                self.flag = False
 
         except queue.Empty:
             pass
 
         plt.clf()
         plt.plot(self.x, self.mse, label = "Mean Squared Error")
+        if (len(self.mse) == 100) and (self.flag):
+            self.flag = False
+            print(self.mse)
         # plt.plot(self.x, self.mae, label = "Mean Absolute Error")
         # plt.legend()
         plt.xlabel('Time', fontsize=10)
