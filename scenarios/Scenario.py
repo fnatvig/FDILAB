@@ -58,7 +58,7 @@ class Scenario:
             return load_profile
         
         elif (self.scenario_nr == SCENARIO3_MOD):
-            n_ts=300 
+            n_ts=250
             load_profile = np.zeros([n_ts,n])
             load_values = np.zeros(n_ts)
             for i in range(n_ts):

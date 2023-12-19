@@ -67,11 +67,11 @@ class ModBot:
                     return self.restore_grid(line_list)
 
             elif self.scenario == SCENARIO3_MOD:
-                if int(0.2*self.t_end)<t<int(0.3*self.t_end):
+                if int(0.2*self.t_end)<t<int(0.4*self.t_end):
                     return self.modify(line_list, 20)
                 elif int(0.5*self.t_end)<t<int(0.6*self.t_end):
                     return self.modify(line_list, 9)
-                elif int(0.7*self.t_end)<t<int(0.8*self.t_end):
+                elif int(0.9*self.t_end)<t:
                     return self.modify(line_list, 23)                
                 else:
                     return self.restore_grid(line_list)
