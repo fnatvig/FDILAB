@@ -25,6 +25,7 @@ class Defense:
 
             with open("scripts/detection_models/autoencoder_30bus_min_train.txt", "r") as f:
                 self.model.min_arr = [float(line.rstrip()) for line in f]
+            print(self.model.summary())
         if script == "gmm.py":
             self.model = load('scripts/detection_models/gmm.joblib')
             max_arr, min_arr = [], []
